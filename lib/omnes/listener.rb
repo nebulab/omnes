@@ -6,14 +6,16 @@ require 'omnes/execution'
 module Omnes
   # Subscription to an event
   #
-  # An instance of it is returned on {Spree::Event.subscribe}.
+  # An instance of it is returned on {Omnes::Bus#subscribe}.
   #
   # You're not expected to perform any action with it, besides using it as
   # a reference to unsubscribe.
   #
   # @example
-  #   listener = Spree::Event.subscribe 'event_name'
-  #   Spree::Event.unsubscribe listener
+  #   bus = Omnes::Bus.new
+  #   bus.register(:foo)
+  #   listener = bus.subscribe(:foo) { do_something }
+  #   bus.unsubscribe listener
   class Listener
     # @api private
     attr_reader :pattern, :block

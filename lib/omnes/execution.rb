@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Omnes
-  # Execution of a {Spree::Event::Listener}
+  # Execution of a {Omnes::Listener}
   #
   # When an event is fired, it executes all subscribed listeners. Every single
   # execution is represented as an instance of this class. It contains the
@@ -9,11 +9,11 @@ module Omnes
   # the execution or a benchmark for it.
   #
   # You'll most likely interact with this class for debugging or logging
-  # purposes through the returned value in {Spree::Event.fire}.
+  # purposes through the returned value in {Omnes::Bus#fire}.
   class Execution
     # The listener to which the execution belongs
     #
-    # @return [Spree::Event::Listener]
+    # @return [Omnes::Listener]
     attr_reader :listener
 
     # The value returned by the {#listener}'s block

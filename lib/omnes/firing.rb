@@ -3,20 +3,20 @@
 module Omnes
   # The result of firing an event
   #
-  # It encapsulates a fired {Spree::Event::Event} as well as the
-  # {Spree::Event::Execution}s it originated.
+  # It encapsulates a fired {Omnes::Event} as well as the
+  # {Omnes::Execution}s it originated.
   #
   # This class is useful mainly for debugging and logging purposes. An
-  # instance of it is returned on {Spree::Event.fire}.
+  # instance of it is returned on {Omnes::Bus#fire}.
   class Firing
     # Fired event
     #
-    # @return [Spree::Event::Event]
+    # @return [Omnes::Event]
     attr_reader :event
 
     # Listener executions that the firing originated
     #
-    # @return [Array<Spree::Event::Execution>]
+    # @return [Array<Omnes::Execution>]
     attr_reader :executions
 
     # @api private

@@ -6,23 +6,7 @@ require 'omnes/firing'
 require 'omnes/registry'
 
 module Omnes
-  # Adapter for {Spree::Event}
-  #
-  # Please, access it through {Spree::Event} module. You only need to
-  # configure an instance of it to be used as the default adapter.  E.g., in
-  # `spree.rb` initializer:
-  #
-  # @example
-  #   require "spree/event/adapters/default"
-  #
-  #   Spree.config do |config|
-  #     # ...
-  #     config.events.adapter = Spree::Event::Adapters::Default.new
-  #     # ...
-  #   end
-  #
-  # You won't need to do that from Solidus version 4.0 as this adapter will
-  # be the default one.
+  # An Event Bus for pub/sub
   class Bus
     # @api private
     attr_reader :listeners, :registry
