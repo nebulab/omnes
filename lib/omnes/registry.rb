@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'omnes/errors'
+
 module Omnes
   # Registry of known events
   #
@@ -62,17 +64,13 @@ module Omnes
     def check_event_name_registered(event_name)
       return true if registered?(event_name)
 
-      raise <<~MSG
-            '#{event_name}' is not registered as a valid event name.
-            #{suggestions_message(event_name)}
+      raise EventNotKnownError.new(event_name: event_name), <<~MSG
+        '#{event_name}' is not registered as a valid event name.
+        #{suggestions_message(event_name)}
 
-            All known events are:
+        All known events are:
 
-              '#{event_names.join("', '")}'
-
-            You can register the new events at the end of the `spree.rb` initializer:
-
-              Spree::Event.register('#{event_name}')
+          '#{event_names.join("', '")}'
       MSG
     end
 

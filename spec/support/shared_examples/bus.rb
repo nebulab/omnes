@@ -123,7 +123,7 @@ RSpec.shared_examples 'bus' do
       bus = subject.new
 
       expect {
-        bus.fire('foo')
+        bus.fire(:foo)
       }.to raise_error(/not registered/)
     end
   end
@@ -160,7 +160,7 @@ RSpec.shared_examples 'bus' do
       bus = subject.new
 
       expect {
-        bus.subscribe('foo')
+        bus.subscribe(:foo)
       }.to raise_error(/not registered/)
     end
   end
@@ -197,7 +197,7 @@ RSpec.shared_examples 'bus' do
         bus = subject.new
 
         expect {
-          bus.unsubscribe('foo')
+          bus.unsubscribe(:foo)
         }.to raise_error(/not registered/)
       end
     end
