@@ -161,7 +161,7 @@ module Omnes
     end
 
     def event_name?(candidate)
-      candidate.is_a?(String)
+      candidate.is_a?(Symbol)
     end
   end
 end
