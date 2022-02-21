@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'omnes/event'
-require 'omnes/listener'
+require 'omnes/subscriber'
 require 'omnes/firing'
 require 'omnes/registry'
 
@@ -25,7 +25,7 @@ module Omnes
   # @example
   #   bus.publish(:foo, bar: true)
   #
-  # Lastly, you use {#subscribe} to add a listener to the event.
+  # Lastly, you use {#subscribe} to add a subscriber to the event.
   #
   # @example
   #   bus.subscribe(:foo) do |event|
@@ -33,10 +33,10 @@ module Omnes
   #   end
   class Bus
     # @api private
-    attr_reader :listeners, :registry
+    attr_reader :subscribers, :registry
 
-    def initialize(listeners = [], registry = Registry.new)
-      @listeners = listeners
+    def initialize(subscribers = [], registry = Registry.new)
+      @subscribers = subscribers
       @registry = registry
     end
 
@@ -67,7 +67,7 @@ module Omnes
     # consumed by subscribers
     #
     # @return [Omnes::Firing] A firing object encapsulating metadata for
-    # the event and the originated listener executions
+    # the event and the originated subscriber executions
     #
     # @example
     #   bus = Omnes::Bus.new
@@ -76,13 +76,13 @@ module Omnes
     def publish(event_name, caller_location: caller_locations(1)[0], **payload)
       registry.check_event_name_registered(event_name)
       event = Event.new(payload: payload, caller_location: caller_location)
-      executions = listeners_for_event(event_name).map do |listener|
-        listener.call(event)
+      executions = subscribers_for_event(event_name).map do |subscriber|
+        subscriber.call(event)
       end
       Firing.new(event: event, executions: executions)
     end
 
-    # Subscribe a listener to one or more events
+    # Subscribe a subscriber to one or more events
     #
     # The provided block is executed every time a matching event is publshed.
     #
@@ -90,7 +90,7 @@ module Omnes
     # when a {Regexp}, a set of matching events
     # @yield Code to execute when a matching is triggered
     #
-    # @return [Omnes::Bus#Listener] A subscription object that can be used as
+    # @return [Omnes::Bus#Subscriber] A subscription object that can be used as
     # reference in order to remove the subscription.
     #
     # @example
@@ -101,19 +101,19 @@ module Omnes
     #   end
     def subscribe(event_name_or_regexp, &block)
       registry.check_event_name_registered(event_name_or_regexp) if event_name?(event_name_or_regexp)
-      Listener.new(pattern: event_name_or_regexp, block: block).tap do |listener|
-        @listeners << listener
+      Subscriber.new(pattern: event_name_or_regexp, block: block).tap do |subscriber|
+        @subscribers << subscriber
       end
     end
 
-    # Unsubscribes a listener or all listeners for a given event
+    # Unsubscribes a subscriber or all subscribers for a given event
     #
-    # When unsubscribing from an event, all previous listeners are removed.
+    # When unsubscribing from an event, all previous subscribers are removed.
     # Still, you can add new subscriptions to the same event and they'll be
     # called if the event is published:
     #
-    # @param listener_or_event_name [Symbol, Omnes::Listener] The event name or
-    # the listener object.
+    # @param subscriber_or_event_name [Symbol, Omnes::Subscriber] The event name or
+    # the subscriber object.
     #
     # @example
     #   bus = Omnes::Bus.new
@@ -123,40 +123,40 @@ module Omnes
     #   bus.subscribe(:foo) { do_something_else }
     #   bus.publish(:foo) # `do_something_else` will be called, but
     #   # `do_something` won't
-    def unsubscribe(listener_or_event_name)
-      if listener_or_event_name.is_a?(Listener)
-        unsubscribe_listener(listener_or_event_name)
+    def unsubscribe(subscriber_or_event_name)
+      if subscriber_or_event_name.is_a?(Subscriber)
+        unsubscribe_subscriber(subscriber_or_event_name)
       else
-        registry.check_event_name_registered(listener_or_event_name) if event_name?(listener_or_event_name)
-        unsubscribe_event(listener_or_event_name)
+        registry.check_event_name_registered(subscriber_or_event_name) if event_name?(subscriber_or_event_name)
+        unsubscribe_event(subscriber_or_event_name)
       end
     end
 
-    # Returns new bus with same registry and only specified listeners
+    # Returns new bus with same registry and only specified subscribers
     #
     # That's something useful for testing purposes, as it allows to silence
-    # listeners that are not part of the system under test.
+    # subscribers that are not part of the system under test.
     #
-    # @param listeners [Array<Omnes::Listener>]
-    def with_listeners(listeners)
-      self.class.new(listeners, registry)
+    # @param subscribers [Array<Omnes::Subscriber>]
+    def with_subscribers(subscribers)
+      self.class.new(subscribers, registry)
     end
 
     private
 
-    def listeners_for_event(event_name)
-      @listeners.select do |listener|
-        listener.matches?(event_name)
+    def subscribers_for_event(event_name)
+      @subscribers.select do |subscriber|
+        subscriber.matches?(event_name)
       end
     end
 
-    def unsubscribe_listener(listener)
-      @listeners.delete(listener)
+    def unsubscribe_subscriber(subscriber)
+      @subscribers.delete(subscriber)
     end
 
     def unsubscribe_event(event_name)
-      @listeners.each do |listener|
-        listener.unsubscribe(event_name)
+      @subscribers.each do |subscriber|
+        subscriber.unsubscribe(event_name)
       end
     end
 

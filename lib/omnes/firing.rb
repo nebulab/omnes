@@ -14,7 +14,7 @@ module Omnes
     # @return [Omnes::Event]
     attr_reader :event
 
-    # Listener executions that the firing originated
+    # Subscriber executions that the firing originated
     #
     # @return [Array<Omnes::Execution>]
     attr_reader :executions

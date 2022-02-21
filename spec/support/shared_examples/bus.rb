@@ -35,7 +35,7 @@ RSpec.shared_examples 'bus' do
   end
 
   describe '#publish' do
-    it 'executes listeners subscribed as a string to the event name' do
+    it 'executes subscribers subscribed as a string to the event name' do
       bus = subject.new
       dummy = counter.new
       bus.register('foo')
@@ -46,7 +46,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(1)
     end
 
-    it 'executes listeners subscribed as a regexp to the event name' do
+    it 'executes subscribers subscribed as a regexp to the event name' do
       bus = subject.new
       dummy = counter.new
       bus.register('foo')
@@ -57,7 +57,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(1)
     end
 
-    it "doesn't execute listeners not subscribed to the event name" do
+    it "doesn't execute subscribers not subscribed to the event name" do
       bus = subject.new
       dummy = counter.new
       bus.register('bar')
@@ -69,7 +69,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(0)
     end
 
-    it "doesn't execute listeners partially matching as a string" do
+    it "doesn't execute subscribers partially matching as a string" do
       bus = subject.new
       dummy = counter.new
       bus.register('bar')
@@ -108,14 +108,14 @@ RSpec.shared_examples 'bus' do
       bus = subject.new
       dummy = counter.new
       bus.register('foo')
-      listener1 = bus.subscribe('foo') { dummy.inc }
-      listener2 = bus.subscribe('foo') { dummy.inc }
+      subscriber1 = bus.subscribe('foo') { dummy.inc }
+      subscriber2 = bus.subscribe('foo') { dummy.inc }
 
       firing = bus.publish 'foo'
 
       executions = firing.executions
       expect(executions.count).to be(2)
-      expect(executions.map(&:listener)).to match([listener1, listener2])
+      expect(executions.map(&:subscriber)).to match([subscriber1, subscriber2])
       expect(executions.map(&:result)).to match([1, 2])
     end
 
@@ -136,7 +136,7 @@ RSpec.shared_examples 'bus' do
       block = ->{}
       bus.subscribe('foo', &block)
 
-      expect(bus.listeners.first.block.object_id).to eq(block.object_id)
+      expect(bus.subscribers.first.block.object_id).to eq(block.object_id)
     end
 
     it 'registers to matching event as regexp' do
@@ -145,15 +145,15 @@ RSpec.shared_examples 'bus' do
       block = ->{}
       bus.subscribe(/oo/, &block)
 
-      expect(bus.listeners.first.block.object_id).to eq(block.object_id)
+      expect(bus.subscribers.first.block.object_id).to eq(block.object_id)
     end
 
-    it 'returns a listener object with given block' do
+    it 'returns a subscriber object with given block' do
       bus = subject.new
 
-      listener = bus.subscribe(/foo/) { 'bar' }
+      subscriber = bus.subscribe(/foo/) { 'bar' }
 
-      expect(listener.block.call).to eq('bar')
+      expect(subscriber.block.call).to eq('bar')
     end
 
     it "raises when given event name hasn't been registered" do
@@ -166,14 +166,14 @@ RSpec.shared_examples 'bus' do
   end
 
   describe '#unsubscribe' do
-    context 'when given a listener' do
-      it 'unsubscribes given listener' do
+    context 'when given a subscriber' do
+      it 'unsubscribes given subscriber' do
         bus = subject.new
         dummy = counter.new
         bus.register('foo')
-        listener = bus.subscribe('foo') { dummy.inc }
+        subscriber = bus.subscribe('foo') { dummy.inc }
 
-        bus.unsubscribe listener
+        bus.unsubscribe subscriber
         bus.publish 'foo'
 
         expect(dummy.count).to be(0)
@@ -181,7 +181,7 @@ RSpec.shared_examples 'bus' do
     end
 
     context 'when given an event name' do
-      it 'unsubscribes all listeners for that event' do
+      it 'unsubscribes all subscribers for that event' do
         bus = subject.new
         dummy = counter.new
         bus.register('foo')
@@ -202,7 +202,7 @@ RSpec.shared_examples 'bus' do
       end
     end
 
-    it 'unsubscribes listeners that match event with a regexp' do
+    it 'unsubscribes subscribers that match event with a regexp' do
       bus = subject.new
       dummy = counter.new
       bus.register('foo')
@@ -214,7 +214,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(0)
     end
 
-    it "doesn't unsubscribe listeners for other events" do
+    it "doesn't unsubscribe subscribers for other events" do
       bus = subject.new
       dummy = counter.new
       bus.register('foo')
@@ -227,7 +227,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(1)
     end
 
-    it 'can resubscribe other listeners to the same event', :aggregate_failures do
+    it 'can resubscribe other subscribers to the same event', :aggregate_failures do
       bus = subject.new
       dummy1, dummy2 = Array.new(2) { counter.new }
       bus.register('foo')
@@ -242,20 +242,20 @@ RSpec.shared_examples 'bus' do
     end
   end
 
-  describe '#with_listeners' do
-    it 'returns a new instance with given listeners', :aggregate_failures do
+  describe '#with_subscribers' do
+    it 'returns a new instance with given subscribers', :aggregate_failures do
       bus = subject.new
       dummy1, dummy2, dummy3 = Array.new(3) { counter.new }
       bus.register('foo')
-      listener1 = bus.subscribe('foo') { dummy1.inc }
-      listener2 = bus.subscribe('foo') { dummy2.inc }
-      listener3 = bus.subscribe('foo') { dummy3.inc }
+      subscriber1 = bus.subscribe('foo') { dummy1.inc }
+      subscriber2 = bus.subscribe('foo') { dummy2.inc }
+      subscriber3 = bus.subscribe('foo') { dummy3.inc }
 
-      new_bus = bus.with_listeners([listener1, listener2])
+      new_bus = bus.with_subscribers([subscriber1, subscriber2])
       new_bus.publish('foo')
 
       expect(new_bus).not_to eq(bus)
-      expect(new_bus.listeners).to match_array([listener1, listener2])
+      expect(new_bus.subscribers).to match_array([subscriber1, subscriber2])
       expect(dummy1.count).to be(1)
       expect(dummy2.count).to be(1)
       expect(dummy3.count).to be(0)
@@ -265,7 +265,7 @@ RSpec.shared_examples 'bus' do
       bus = subject.new
       bus.register('foo')
 
-      new_bus = bus.with_listeners([])
+      new_bus = bus.with_subscribers([])
 
       expect(new_bus.registry).to be(bus.registry)
     end

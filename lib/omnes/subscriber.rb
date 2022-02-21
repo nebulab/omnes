@@ -14,9 +14,9 @@ module Omnes
   # @example
   #   bus = Omnes::Bus.new
   #   bus.register(:foo)
-  #   listener = bus.subscribe(:foo) { do_something }
-  #   bus.unsubscribe listener
-  class Listener
+  #   subscriber = bus.subscribe(:foo) { do_something }
+  #   bus.unsubscribe subscriber
+  class Subscriber
     # @api private
     attr_reader :pattern, :block
 
@@ -34,7 +34,7 @@ module Omnes
         result = @block.call(event)
       end
 
-      Execution.new(listener: self, result: result, benchmark: benchmark)
+      Execution.new(subscriber: self, result: result, benchmark: benchmark)
     end
 
     # @api private
@@ -51,7 +51,7 @@ module Omnes
     end
 
     # @api private
-    def listeners
+    def subscribers
       [self]
     end
 
