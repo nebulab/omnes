@@ -35,7 +35,7 @@ module Omnes
     # @api private
     attr_reader :subscribers, :registry
 
-    def initialize(subscribers = [], registry = Registry.new)
+    def initialize(subscribers: [], registry: Registry.new)
       @subscribers = subscribers
       @registry = registry
     end
@@ -139,7 +139,7 @@ module Omnes
     #
     # @param subscribers [Array<Omnes::Subscriber>]
     def with_subscribers(subscribers)
-      self.class.new(subscribers, registry)
+      self.class.new(subscribers: subscribers, registry: registry)
     end
 
     private
