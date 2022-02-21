@@ -15,7 +15,7 @@ RSpec.describe 'Omnes included' do
       end
 
       def call
-        fire(:foo)
+        publish(:foo)
       end
     end
     collaborator = Struct.new(:called).new(false)

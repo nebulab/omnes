@@ -3,13 +3,13 @@
 module Omnes
   # Execution of a {Omnes::Listener}
   #
-  # When an event is fired, it executes all subscribed listeners. Every single
-  # execution is represented as an instance of this class. It contains the
-  # result value of the listener, along with helpful metadata as the time of
+  # When an event is published, it executes all subscribed listeners. Every
+  # single execution is represented as an instance of this class. It contains
+  # the result value of the listener, along with helpful metadata as the time of
   # the execution or a benchmark for it.
   #
   # You'll most likely interact with this class for debugging or logging
-  # purposes through the returned value in {Omnes::Bus#fire}.
+  # purposes through the returned value in {Omnes::Bus#publish}.
   class Execution
     # The listener to which the execution belongs
     #

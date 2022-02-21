@@ -23,7 +23,7 @@ module Omnes
   # You can then publish it alongside a payload:
   #
   # @example
-  #   bus.fire(:foo, bar: true)
+  #   bus.publish(:foo, bar: true)
   #
   # Lastly, you use {#subscribe} to add a listener to the event.
   #
@@ -72,8 +72,8 @@ module Omnes
     # @example
     #   bus = Omnes::Bus.new
     #   bus.register(:foo)
-    #   bus.fire(:foo, bar: true)
-    def fire(event_name, caller_location: caller_locations(1)[0], **payload)
+    #   bus.publish(:foo, bar: true)
+    def publish(event_name, caller_location: caller_locations(1)[0], **payload)
       registry.check_event_name_registered(event_name)
       event = Event.new(payload: payload, caller_location: caller_location)
       executions = listeners_for_event(event_name).map do |listener|
@@ -84,7 +84,7 @@ module Omnes
 
     # Subscribe a listener to one or more events
     #
-    # The provided block is executed every time a matching event is fired.
+    # The provided block is executed every time a matching event is publshed.
     #
     # @param event_name_or_regexp [Symbol, Regexp] The name of the event or,
     # when a {Regexp}, a set of matching events
@@ -110,7 +110,7 @@ module Omnes
     #
     # When unsubscribing from an event, all previous listeners are removed.
     # Still, you can add new subscriptions to the same event and they'll be
-    # called if the event is fired:
+    # called if the event is published:
     #
     # @param listener_or_event_name [Symbol, Omnes::Listener] The event name or
     # the listener object.
@@ -121,7 +121,7 @@ module Omnes
     #   bus.subscribe(:foo) { do_something }
     #   bus.unsubscribe(:foo)
     #   bus.subscribe(:foo) { do_something_else }
-    #   bus.fire(:foo) # `do_something_else` will be called, but
+    #   bus.publish(:foo) # `do_something_else` will be called, but
     #   # `do_something` won't
     def unsubscribe(listener_or_event_name)
       if listener_or_event_name.is_a?(Listener)

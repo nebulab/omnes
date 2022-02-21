@@ -3,7 +3,7 @@
 module Omnes
   # A triggered event
   #
-  # An instance of it is automatically created on {Omnes::Bus#fire} and yielded
+  # An instance of it is automatically created on {Omnes::Bus#publish} and yielded
   # to all subscribers (see {Omnes::Bus#subscribe}.
   #
   # @example
@@ -12,13 +12,14 @@ module Omnes
   #   bus.subscribe(:foo) do |event|
   #     puts event.payload[:bar]
   #   end
-  #   bus.fire :foo, bar: 'bar'
+  #   bus.publish :foo, bar: 'bar'
   #
-  # Besides, it can be accessed through the returned value in {Omnes::Bus#fire}.
+  # Besides, it can be accessed through the returned value in
+  # {Omnes::Bus#publish}.
   # It can be useful for debugging and logging purposes, as it contains
   # helpful metadata like the event time or the caller location.
   class Event
-    # Hash with the options given to {Omnes::Bus#fire}
+    # Hash with the options given to {Omnes::Bus#publish}
     #
     # @return [Hash]
     attr_reader :payload
@@ -30,7 +31,7 @@ module Omnes
 
     # Location for the event caller
     #
-    # It's usually set by {Omnes::Bus#fire}, and it points to the caller of
+    # It's usually set by {Omnes::Bus#publish}, and it points to the caller of
     # that method.
     #
     # @return [Thread::Backtrace::Location]

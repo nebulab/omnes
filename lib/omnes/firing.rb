@@ -3,11 +3,11 @@
 module Omnes
   # The result of firing an event
   #
-  # It encapsulates a fired {Omnes::Event} as well as the
+  # It encapsulates a published {Omnes::Event} as well as the
   # {Omnes::Execution}s it originated.
   #
   # This class is useful mainly for debugging and logging purposes. An
-  # instance of it is returned on {Omnes::Bus#fire}.
+  # instance of it is returned on {Omnes::Bus#publish}.
   class Firing
     # Fired event
     #

@@ -14,7 +14,7 @@ RSpec.describe 'Omnes bus as an instance' do
       end
 
       def call
-        bus.fire(:foo)
+        bus.publish(:foo)
       end
     end
     collaborator = Struct.new(:called).new(false)

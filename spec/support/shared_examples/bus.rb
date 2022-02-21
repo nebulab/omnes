@@ -34,14 +34,14 @@ RSpec.shared_examples 'bus' do
     end
   end
 
-  describe '#fire' do
+  describe '#publish' do
     it 'executes listeners subscribed as a string to the event name' do
       bus = subject.new
       dummy = counter.new
       bus.register('foo')
       bus.subscribe('foo') { dummy.inc }
 
-      bus.fire 'foo'
+      bus.publish 'foo'
 
       expect(dummy.count).to be(1)
     end
@@ -52,7 +52,7 @@ RSpec.shared_examples 'bus' do
       bus.register('foo')
       bus.subscribe(/oo/) { dummy.inc }
 
-      bus.fire 'foo'
+      bus.publish 'foo'
 
       expect(dummy.count).to be(1)
     end
@@ -64,7 +64,7 @@ RSpec.shared_examples 'bus' do
       bus.subscribe('bar') { dummy.inc }
       bus.register('foo')
 
-      bus.fire 'foo'
+      bus.publish 'foo'
 
       expect(dummy.count).to be(0)
     end
@@ -76,7 +76,7 @@ RSpec.shared_examples 'bus' do
       bus.subscribe('bar') { dummy.inc }
       bus.register('barr')
 
-      bus.fire 'barr'
+      bus.publish 'barr'
 
       expect(dummy.count).to be(0)
     end
@@ -89,17 +89,17 @@ RSpec.shared_examples 'bus' do
       bus.register('foo')
       bus.subscribe('foo') { |event| dummy.box = event.payload[:box] }
 
-      bus.fire 'foo', box: 'foo'
+      bus.publish 'foo', box: 'foo'
 
       expect(dummy.box).to eq('foo')
     end
 
-    it 'adds the fired event with given caller location to the firing result object' do
+    it 'adds the published event with given caller location to the firing result object' do
       bus = subject.new
       bus.register('foo')
       bus.subscribe('foo') { :work }
 
-      firing = bus.fire 'foo', caller_location: caller_locations(0)[0]
+      firing = bus.publish 'foo', caller_location: caller_locations(0)[0]
 
       expect(firing.event.caller_location.to_s).to include(__FILE__)
     end
@@ -111,7 +111,7 @@ RSpec.shared_examples 'bus' do
       listener1 = bus.subscribe('foo') { dummy.inc }
       listener2 = bus.subscribe('foo') { dummy.inc }
 
-      firing = bus.fire 'foo'
+      firing = bus.publish 'foo'
 
       executions = firing.executions
       expect(executions.count).to be(2)
@@ -119,11 +119,11 @@ RSpec.shared_examples 'bus' do
       expect(executions.map(&:result)).to match([1, 2])
     end
 
-    it "raises when the fired event hasn't been registered" do
+    it "raises when the published event hasn't been registered" do
       bus = subject.new
 
       expect {
-        bus.fire(:foo)
+        bus.publish(:foo)
       }.to raise_error(/not registered/)
     end
   end
@@ -174,7 +174,7 @@ RSpec.shared_examples 'bus' do
         listener = bus.subscribe('foo') { dummy.inc }
 
         bus.unsubscribe listener
-        bus.fire 'foo'
+        bus.publish 'foo'
 
         expect(dummy.count).to be(0)
       end
@@ -188,7 +188,7 @@ RSpec.shared_examples 'bus' do
         bus.subscribe('foo') { dummy.inc }
 
         bus.unsubscribe 'foo'
-        bus.fire 'foo'
+        bus.publish 'foo'
 
         expect(dummy.count).to be(0)
       end
@@ -209,7 +209,7 @@ RSpec.shared_examples 'bus' do
       bus.subscribe(/foo/) { dummy.inc }
       bus.unsubscribe 'foo'
 
-      bus.fire 'foo'
+      bus.publish 'foo'
 
       expect(dummy.count).to be(0)
     end
@@ -222,7 +222,7 @@ RSpec.shared_examples 'bus' do
 
       bus.subscribe('foo') { dummy.inc }
       bus.unsubscribe 'bar'
-      bus.fire 'foo'
+      bus.publish 'foo'
 
       expect(dummy.count).to be(1)
     end
@@ -235,7 +235,7 @@ RSpec.shared_examples 'bus' do
       bus.subscribe('foo') { dummy1.inc }
       bus.unsubscribe 'foo'
       bus.subscribe('foo') { dummy2.inc }
-      bus.fire 'foo'
+      bus.publish 'foo'
 
       expect(dummy1.count).to be(0)
       expect(dummy2.count).to be(1)
@@ -252,7 +252,7 @@ RSpec.shared_examples 'bus' do
       listener3 = bus.subscribe('foo') { dummy3.inc }
 
       new_bus = bus.with_listeners([listener1, listener2])
-      new_bus.fire('foo')
+      new_bus.publish('foo')
 
       expect(new_bus).not_to eq(bus)
       expect(new_bus.listeners).to match_array([listener1, listener2])
