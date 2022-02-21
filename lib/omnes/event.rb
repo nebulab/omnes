@@ -43,5 +43,14 @@ module Omnes
       @caller_location = caller_location
       @firing_time = firing_time
     end
+
+    # Delegates to {#payload}
+    #
+    # @param key [Symbol]
+    #
+    # @return Any
+    def [](key)
+      payload[key]
+    end
   end
 end
