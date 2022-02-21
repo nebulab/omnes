@@ -76,7 +76,7 @@ module Omnes
     #   bus.register(:foo)
     #   bus.publish(:foo, bar: true)
     def publish(event_name, caller_location: caller_locations(1)[0], **payload)
-      registry.check_event_name_registered(event_name)
+      event_name = registry.sanitize_event_name(event_name)
       event = Event.new(payload: payload, caller_location: caller_location)
       executions = subscribers_for_event(event_name).map do |subscriber|
         subscriber.call(event)
@@ -102,7 +102,7 @@ module Omnes
     #     do_something if event.payload[:foo]
     #   end
     def subscribe(event_name_or_regexp, &block)
-      registry.check_event_name_registered(event_name_or_regexp) if event_name?(event_name_or_regexp)
+      event_name_or_regexp = registry.sanitize_event_name(event_name_or_regexp) unless event_name_or_regexp.is_a?(Regexp)
       Subscriber.new(pattern: event_name_or_regexp, block: block).tap do |subscriber|
         @subscribers << subscriber
       end
@@ -129,8 +129,8 @@ module Omnes
       if subscriber_or_event_name.is_a?(Subscriber)
         unsubscribe_subscriber(subscriber_or_event_name)
       else
-        registry.check_event_name_registered(subscriber_or_event_name) if event_name?(subscriber_or_event_name)
-        unsubscribe_event(subscriber_or_event_name)
+        event_name = registry.sanitize_event_name(subscriber_or_event_name)
+        unsubscribe_event(event_name)
       end
     end
 
@@ -160,10 +160,6 @@ module Omnes
       @subscribers.each do |subscriber|
         subscriber.unsubscribe(event_name)
       end
-    end
-
-    def event_name?(candidate)
-      candidate.is_a?(Symbol)
     end
   end
 end
