@@ -68,36 +68,23 @@ RSpec.describe Omnes::Subscriber do
     end
 
     it 'returns false when given event name matches but the subscriber is unsubscribed from the event' do
-      subscriber = described_class.new(pattern: :foo, block: -> {})
+      subscriber = described_class.new(pattern: /foo/, block: -> {})
 
-      subscriber.unsubscribe(:foo)
+      subscriber.exclude(:foo)
 
       expect(subscriber.matches?(:foo)).to be(false)
     end
   end
 
-  describe '#unsubscribe' do
-    context 'when event name matches' do
-      it 'adds an exclusion so that it no longer matches' do
-        subscriber = described_class.new(pattern: :foo, block: -> {})
+  describe '#exclude' do
+    it 'adds an exclusion so that it no longer matches' do
+      subscriber = described_class.new(pattern: /foo/, block: -> {})
 
-        expect(subscriber.matches?(:foo)).to be(true)
+      expect(subscriber.matches?(:foo)).to be(true)
 
-        subscriber.unsubscribe(:foo)
+      subscriber.exclude(:foo)
 
-        expect(subscriber.matches?(:foo)).to be(false)
-      end
-    end
-
-    context "when event name doesn't match" do
-      it 'does nothing' do
-        subscriber = described_class.new(pattern: :foo, block: -> {})
-
-        subscriber.unsubscribe(:bar)
-
-        expect(subscriber.matches?(:foo)).to be(true)
-        expect(subscriber.matches?(:bar)).to be(false)
-      end
+      expect(subscriber.matches?(:foo)).to be(false)
     end
   end
 
@@ -106,6 +93,24 @@ RSpec.describe Omnes::Subscriber do
       subscriber = described_class.new(pattern: :foo, block: -> {})
 
       expect(subscriber.subscribers).to eq([subscriber])
+    end
+  end
+
+  describe '#regexp?' do
+    context 'when pattern is a Regexp' do
+      it 'returns true' do
+        subscriber = described_class.new(pattern: /foo/, block: -> {})
+
+        expect(subscriber.regexp?).to be(true)
+      end
+    end
+
+    context 'when pattern is not a Regexp' do
+      it 'returns false' do
+        subscriber = described_class.new(pattern: :foo, block: -> {})
+
+        expect(subscriber.regexp?).to be(false)
+      end
     end
   end
 end

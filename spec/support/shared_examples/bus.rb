@@ -237,6 +237,17 @@ RSpec.shared_examples 'bus' do
         expect(dummy.count).to be(0)
       end
 
+      it 'removes subscribers for that event' do
+        bus = subject.new
+        dummy = counter.new
+        bus.register(:foo)
+        subscriber = bus.subscribe(:foo) { dummy.inc }
+
+        bus.unsubscribe :foo
+
+        expect(bus.subscribers).not_to include(subscriber)
+      end
+
       it "raises when given event name hasn't been registered" do
         bus = subject.new
 

@@ -44,15 +44,18 @@ module Omnes
     end
 
     # @api private
-    def unsubscribe(event_name)
-      return unless matches?(event_name)
-
+    def exclude(event_name)
       @exclusions << event_name
     end
 
     # @api private
     def subscribers
       [self]
+    end
+
+    # @api private
+    def regexp?
+      pattern.is_a?(Regexp)
     end
 
     private

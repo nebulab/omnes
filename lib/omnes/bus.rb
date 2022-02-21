@@ -158,7 +158,13 @@ module Omnes
 
     def unsubscribe_event(event_name)
       @subscribers.each do |subscriber|
-        subscriber.unsubscribe(event_name)
+        next unless subscriber.matches?(event_name)
+
+        if subscriber.regexp?
+          subscriber.exclude(event_name)
+        else
+          unsubscribe_subscriber(subscriber)
+        end
       end
     end
   end
