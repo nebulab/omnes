@@ -33,7 +33,9 @@ module Omnes
             #{registration.caller_location}
         MSG
       else
-        @registrations << Registration.new(event_name: event_name, caller_location: caller_location)
+        Registration.new(event_name: event_name, caller_location: caller_location).tap do |reg|
+          @registrations << reg
+        end
       end
     end
 

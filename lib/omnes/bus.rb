@@ -53,6 +53,8 @@ module Omnes
     # @param caller_location [Thread::Backtrace::Location] Caller location
     # associated to the registration. Useful for debugging (shown in error
     # messages). It defaults to this method's caller.
+    #
+    # @return [Omnes::Registry::Registration]
     def register(event_name, caller_location: caller_locations(1)[0])
       registry.register(event_name, caller_location: caller_location)
     end

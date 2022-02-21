@@ -21,6 +21,14 @@ RSpec.describe Omnes::Registry do
       expect(registry.registration('foo').caller_location.to_s).to include(__FILE__)
     end
 
+    it 'returns the registration' do
+      registry = described_class.new
+
+      registration = registry.register('foo', caller_location: caller_locations(0)[0])
+
+      expect(registration).to be_a(Omnes::Registry::Registration)
+    end
+
     it 'raises with the registration location info when the event has already been registered' do
       registry = described_class.new
 
