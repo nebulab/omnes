@@ -1,28 +1,120 @@
 # Omnes
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/omnes`. To experiment with that code, run `bin/console` for an interactive prompt.
+Simple pub/sub for Ruby.
 
-TODO: Delete this and the text above, and describe your gem
+Omnes is a simple Ruby library implementing the publish-subscribe pattern. This
+pattern allows senders of messages to be decoupled from their receivers. An
+Event Bus acts as a middleman where events are published while interested
+actors can subscribe to them.
 
 ## Installation
 
-Add this line to your application's Gemfile:
+`bundle add omnes`
+
+## Example
 
 ```ruby
-gem 'omnes'
+require 'omnes/bus'
+Bus = Omnes::Bus.new
+Bus.register(:change_customer_address_success)
+Bus.register(:change_customer_address_failure)
+Bus.subscribe(:change_customer_address_success, UpdateCustomerInsuranceSubscriber.new.method(:on_change_address_success))
+
+class ChangeCustomerAddress
+  attr_reader :bus
+  
+  def initialize(bus: Bus)
+    @bus = bus
+  end
+  
+  def call(customer, address)
+    result = # Custom logic to change the customer address
+    
+    result.tap do
+      if result.success?
+        bus.publish(:change_customer_address_success, customer_id: customer.id, address: address)
+      else
+        bus.publish(:change_customer_address_failure, customer_id: customer.id, address: address)
+      end
+    end
+  end
+end
+
+class UpdateCustomerInsuranceSubscriber
+  def on_change_address_success(event)
+    UpdateCustomerInsurance.new.call(customer_id: event[:customer_id], address: event[:address])
+  end
+end
+
+customer = # ...
+address = # ...
+ChangeCustomerAddress.new.call(customer, address)
 ```
 
-And then execute:
+You can also mix in pub/sub capabilities to any instance:
 
-    $ bundle install
 
-Or install it yourself as:
+```ruby
+class ChangeCustomerAddress
+  include Omnes
+  
+  def initialize
+    register(:success)
+    register(:failure)
+  end
+  
+  def call(customer, address)
+    result = # Custom logic to change the customer address
+    
+    result.tap do
+      if result.success?
+        publish(:success, customer_id: customer.id, address: address)
+      else
+        publish(:failure, customer_id: customer.id, address: address)
+      end
+    end
+  end
+end
 
-    $ gem install omnes
+change_customer_address = ChangeCustomerAddress.new
+change_customer_address.subscribe(:success) do |event|
+  UpdateCustomerInsuranceSubscriber.new.method(:on_change_address_success)
+end
+change_customer_address.call(customer, address)
+```
 
-## Usage
+## Rails Example
+```ruby
+# config/initializers/omnes.rb
+require 'omnes/bus'
+Bus = Omnes::Bus.new
+Bus.register(:change_customer_address_success)
+Bus.register(:change_customer_address_failure)
+Bus.subscribe(:change_customer_address_success, UpdateCustomerInsuranceSubscriber.new.method(:on_change_address_success))
 
-TODO: Write usage instructions here
+# app/subcribers/update_customer_insurance_subscriber.rb
+class UpdateCustomerInsuranceSubscriber
+  def on_change_address_success(event)
+    UpdateCustomerInsurance.new.call(customer_id: event[:customer_id], address: event[:address])
+  end
+end
+
+# app/controllers/customers_controller.rb
+class CustomersController < ApplicationController
+  def update_address
+    customer = Customer.find(params[:id])
+    address = params[:address]
+    
+    if ChangeCustomerAddress.new.call(customer, address)
+      redirect_to root_path
+    else
+      render :edit
+    end
+  end
+end
+```
+
+
 
 ## Development
 
