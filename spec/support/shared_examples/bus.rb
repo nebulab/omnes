@@ -210,90 +210,102 @@ RSpec.shared_examples 'bus' do
   end
 
   describe '#unsubscribe' do
-    context 'when given a subscriber' do
-      it 'unsubscribes given subscriber' do
-        bus = subject.new
-        dummy = counter.new
-        bus.register(:foo)
-        subscriber = bus.subscribe(:foo) { dummy.inc }
-
-        bus.unsubscribe subscriber
-        bus.publish :foo
-
-        expect(dummy.count).to be(0)
-      end
-    end
-
-    context 'when given an event name' do
-      it 'unsubscribes all subscribers for that event' do
-        bus = subject.new
-        dummy = counter.new
-        bus.register(:foo)
-        bus.subscribe(:foo) { dummy.inc }
-
-        bus.unsubscribe :foo
-        bus.publish :foo
-
-        expect(dummy.count).to be(0)
-      end
-
-      it 'removes subscribers for that event' do
-        bus = subject.new
-        dummy = counter.new
-        bus.register(:foo)
-        subscriber = bus.subscribe(:foo) { dummy.inc }
-
-        bus.unsubscribe :foo
-
-        expect(bus.subscribers).not_to include(subscriber)
-      end
-
-      it "raises when given event name hasn't been registered" do
-        bus = subject.new
-
-        expect {
-          bus.unsubscribe(:foo)
-        }.to raise_error(/not registered/)
-      end
-    end
-
-    it 'unsubscribes subscribers that match event with a regexp' do
+    it 'unsubscribes given subscriber' do
       bus = subject.new
       dummy = counter.new
       bus.register(:foo)
-      bus.subscribe(/foo/) { dummy.inc }
-      bus.unsubscribe :foo
+      subscriber = bus.subscribe(:foo) { dummy.inc }
 
+      bus.unsubscribe subscriber
       bus.publish :foo
 
       expect(dummy.count).to be(0)
     end
+  end
 
-    it "doesn't unsubscribe subscribers for other events" do
+  describe '#unregister' do
+    it 'removes the event from the registry' do
       bus = subject.new
-      dummy = counter.new
       bus.register(:foo)
-      bus.register(:bar)
 
-      bus.subscribe(:foo) { dummy.inc }
-      bus.unsubscribe :bar
-      bus.publish :foo
+      bus.unregister(:foo)
 
-      expect(dummy.count).to be(1)
+      expect(bus.registry.registered?(:foo)).to be(false)
     end
 
-    it 'can resubscribe other subscribers to the same event', :aggregate_failures do
+    it 'removes subscribers for that event' do
       bus = subject.new
-      dummy1, dummy2 = Array.new(2) { counter.new }
+      bus.register(:foo)
+      subscriber = bus.subscribe(:foo)
+
+      bus.unregister(:foo)
+
+      expect(bus.subscribers).not_to include(subscriber)
+    end
+
+    it "doesn't remove subscribers for other events" do
+      bus = subject.new
+      bus.register(:foo)
+      bus.register(:bar)
+      subscriber = bus.subscribe(:foo)
+
+      bus.unregister(:bar)
+
+      expect(bus.subscribers).to include(subscriber)
+    end
+
+    it 'excludes events for regexp subscribers that match the event' do
+      bus = subject.new
+      bus.register(:foo)
+      subscriber = bus.subscribe(/foo/)
+
+      expect(subscriber.matches?(:foo)).to be(true)
+
+      bus.unregister(:foo)
+
+      expect(subscriber.matches?(:foo)).to be(false)
+    end
+
+    it "doesn't exclude the subscriber to partial matches on the event" do
+      bus = subject.new
+      bus.register(:foo)
+      bus.register(:fooo)
+      subscriber = bus.subscribe(/foo/)
+
+      expect(subscriber.matches?(:foo)).to be(true)
+      expect(subscriber.matches?(:fooo)).to be(true)
+
+      bus.unregister(:foo)
+
+      expect(subscriber.matches?(:foo)).to be(false)
+      expect(subscriber.matches?(:fooo)).to be(true)
+    end
+
+    it 'normalizes given event name' do
+      bus = subject.new
       bus.register(:foo)
 
-      bus.subscribe(:foo) { dummy1.inc }
-      bus.unsubscribe :foo
-      bus.subscribe(:foo) { dummy2.inc }
-      bus.publish :foo
+      bus.unregister('foo')
 
-      expect(dummy1.count).to be(0)
-      expect(dummy2.count).to be(1)
+      expect(bus.registry.registered?(:foo)).to be(false)
+    end
+
+    it "raises when given event name hasn't been registered" do
+      bus = subject.new
+
+      expect {
+        bus.unregister(:foo)
+      }.to raise_error(/not registered/)
+    end
+
+    it "doesn't exclude regexp subscribers when the event hasn't been registered" do
+      bus = subject.new
+
+      subscriber = bus.subscribe(/foo/)
+
+      expect { bus.unregister(:foo) }.to raise_error(/not registered/)
+
+      expect(subscriber.matches?(:foo)).to be(true)
     end
   end
 

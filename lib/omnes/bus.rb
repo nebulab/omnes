@@ -108,29 +108,33 @@ module Omnes
       end
     end
 
-    # Unsubscribes a subscriber or all subscribers for a given event
+    # Unsubscribes a subscriber
     #
-    # When unsubscribing from an event, all previous subscribers are removed.
-    # Still, you can add new subscriptions to the same event and they'll be
-    # called if the event is published:
+    # The subscribed is removed from the queue.
     #
-    # @param subscriber_or_event_name [Symbol, Omnes::Subscriber] The event name or
-    # the subscriber object.
+    # @param subscriber [Omnes::Subscriber]
+    def unsubscribe(subscriber)
+      @subscribers.delete(subscriber)
+    end
+
+    # Unregisters an event
     #
-    # @example
-    #   bus = Omnes::Bus.new
-    #   bus.register(:foo)
-    #   bus.subscribe(:foo) { do_something }
-    #   bus.unsubscribe(:foo)
-    #   bus.subscribe(:foo) { do_something_else }
-    #   bus.publish(:foo) # `do_something_else` will be called, but
-    #   # `do_something` won't
-    def unsubscribe(subscriber_or_event_name)
-      if subscriber_or_event_name.is_a?(Subscriber)
-        unsubscribe_subscriber(subscriber_or_event_name)
-      else
-        event_name = registry.sanitize_event_name(subscriber_or_event_name)
-        unsubscribe_event(event_name)
+    # Associated subscribers won't run if the event is re-registered. Direct
+    # subscribers are removed from the queue (see {#unsubscribe}), while regexp
+    # subscribers will exclude given event.
+    #
+    # @param event_name [Symbol]
+    def unregister(event_name)
+      event_name = registry.sanitize_event_name(event_name)
+      registry.unregister(event_name)
+      @subscribers.each do |subscriber|
+        next unless subscriber.matches?(event_name)
+
+        if subscriber.regexp?
+          subscriber.exclude(event_name)
+        else
+          unsubscribe(subscriber)
+        end
       end
     end
 
@@ -149,22 +153,6 @@ module Omnes
     def subscribers_for_event(event_name)
       @subscribers.select do |subscriber|
         subscriber.matches?(event_name)
-      end
-    end
-
-    def unsubscribe_subscriber(subscriber)
-      @subscribers.delete(subscriber)
-    end
-
-    def unsubscribe_event(event_name)
-      @subscribers.each do |subscriber|
-        next unless subscriber.matches?(event_name)
-
-        if subscriber.regexp?
-          subscriber.exclude(event_name)
-        else
-          unsubscribe_subscriber(subscriber)
-        end
       end
     end
   end
