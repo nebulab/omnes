@@ -4,7 +4,7 @@ module Omnes
   # A triggered event
   #
   # An instance of it is automatically created on {Omnes::Bus#publish} and yielded
-  # to all subscribers (see {Omnes::Bus#subscribe}.
+  # to all subscriptions (see {Omnes::Bus#subscribe}.
   #
   # @example
   #   bus = Omnes::Bus.new

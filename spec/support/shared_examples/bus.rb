@@ -35,7 +35,7 @@ RSpec.shared_examples 'bus' do
   end
 
   describe '#publish' do
-    it 'executes plain subscribers for given event name' do
+    it 'executes direct subscriptions for given event name' do
       bus = subject.new
       dummy = counter.new
       bus.register(:foo)
@@ -46,7 +46,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(1)
     end
 
-    it 'executes plain subscribers for given event name' do
+    it 'executes plain subscriptions for given event name' do
       bus = subject.new
       dummy = counter.new
       bus.register(:foo)
@@ -57,7 +57,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(1)
     end
 
-    it 'executes regexp subscribers for given event name' do
+    it 'executes regexp subscriptions for given event name' do
       bus = subject.new
       dummy = counter.new
       bus.register(:foo)
@@ -68,7 +68,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(1)
     end
 
-    it "doesn't execute other event subscribers" do
+    it "doesn't execute other event subscriptions" do
       bus = subject.new
       dummy = counter.new
       bus.register(:bar)
@@ -80,7 +80,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(0)
     end
 
-    it "doesn't execute subscribers partially matching" do
+    it "doesn't execute subscriptions partially matching" do
       bus = subject.new
       dummy = counter.new
       bus.register(:bar)
@@ -92,7 +92,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(0)
     end
 
-    it "doesn't execute subscribers where the event partially matches" do
+    it "doesn't execute subscriptions where the event partially matches" do
       bus = subject.new
       dummy = counter.new
       bus.register(:barr)
@@ -104,7 +104,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(0)
     end
 
-    it 'yields the given options to the subscriber as the event payload' do
+    it 'yields the given options to the subscription as the event payload' do
       bus = subject.new
       dummy = Class.new do
         attr_accessor :box
@@ -131,14 +131,14 @@ RSpec.shared_examples 'bus' do
       bus = subject.new
       dummy = counter.new
       bus.register(:foo)
-      subscriber1 = bus.subscribe(:foo) { dummy.inc }
-      subscriber2 = bus.subscribe(:foo) { dummy.inc }
+      subscription1 = bus.subscribe(:foo) { dummy.inc }
+      subscription2 = bus.subscribe(:foo) { dummy.inc }
 
       firing = bus.publish :foo
 
       executions = firing.executions
       expect(executions.count).to be(2)
-      expect(executions.map(&:subscriber)).to match([subscriber1, subscriber2])
+      expect(executions.map(&:subscription)).to match([subscription1, subscription2])
       expect(executions.map(&:result)).to match([1, 2])
     end
 
@@ -170,9 +170,9 @@ RSpec.shared_examples 'bus' do
       block = -> {}
       bus.subscribe(:foo, &block)
 
-      subscriber = bus.subscribers.first
-      expect(subscriber.pattern).to be(:foo)
-      expect(subscriber.block.object_id).to eq(block.object_id)
+      subscription = bus.subscriptions.first
+      expect(subscription.pattern).to be(:foo)
+      expect(subscription.block.object_id).to eq(block.object_id)
     end
 
     it 'registers to matching event as a regexp', :aggregate_failures do
@@ -183,9 +183,9 @@ RSpec.shared_examples 'bus' do
       pattern = /oo/
       bus.subscribe(pattern, &block)
 
-      subscriber = bus.subscribers.first
-      expect(subscriber.pattern).to be(pattern)
-      expect(subscriber.block.object_id).to eq(block.object_id)
+      subscription = bus.subscriptions.first
+      expect(subscription.pattern).to be(pattern)
+      expect(subscription.block.object_id).to eq(block.object_id)
     end
 
     it "raises when given event name hasn't been registered" do
@@ -203,20 +203,20 @@ RSpec.shared_examples 'bus' do
       block = -> {}
       bus.subscribe('foo', &block)
 
-      subscriber = bus.subscribers.first
-      expect(subscriber.pattern).to be(:foo)
-      expect(subscriber.block.object_id).to eq(block.object_id)
+      subscription = bus.subscriptions.first
+      expect(subscription.pattern).to be(:foo)
+      expect(subscription.block.object_id).to eq(block.object_id)
     end
   end
 
   describe '#unsubscribe' do
-    it 'unsubscribes given subscriber' do
+    it 'removes given subscription' do
       bus = subject.new
       dummy = counter.new
       bus.register(:foo)
-      subscriber = bus.subscribe(:foo) { dummy.inc }
+      subscription = bus.subscribe(:foo) { dummy.inc }
 
-      bus.unsubscribe subscriber
+      bus.unsubscribe subscription
       bus.publish :foo
 
       expect(dummy.count).to be(0)
@@ -233,52 +233,52 @@ RSpec.shared_examples 'bus' do
       expect(bus.registry.registered?(:foo)).to be(false)
     end
 
-    it 'removes subscribers for that event' do
+    it 'removes subscriptions for that event' do
       bus = subject.new
       bus.register(:foo)
-      subscriber = bus.subscribe(:foo)
+      subscription = bus.subscribe(:foo)
 
       bus.unregister(:foo)
 
-      expect(bus.subscribers).not_to include(subscriber)
+      expect(bus.subscriptions).not_to include(subscription)
     end
 
-    it "doesn't remove subscribers for other events" do
+    it "doesn't remove subscriptions for other events" do
       bus = subject.new
       bus.register(:foo)
       bus.register(:bar)
-      subscriber = bus.subscribe(:foo)
+      subscription = bus.subscribe(:foo)
 
       bus.unregister(:bar)
 
-      expect(bus.subscribers).to include(subscriber)
+      expect(bus.subscriptions).to include(subscription)
     end
 
-    it 'excludes events for regexp subscribers that match the event' do
+    it 'excludes events for regexp subscriptions that match the event' do
       bus = subject.new
       bus.register(:foo)
-      subscriber = bus.subscribe(/foo/)
+      subscription = bus.subscribe(/foo/)
 
-      expect(subscriber.matches?(:foo)).to be(true)
+      expect(subscription.matches?(:foo)).to be(true)
 
       bus.unregister(:foo)
 
-      expect(subscriber.matches?(:foo)).to be(false)
+      expect(subscription.matches?(:foo)).to be(false)
     end
 
-    it "doesn't exclude the subscriber to partial matches on the event" do
+    it "doesn't exclude the subscription to partial matches on the event" do
       bus = subject.new
       bus.register(:foo)
       bus.register(:fooo)
-      subscriber = bus.subscribe(/foo/)
+      subscription = bus.subscribe(/foo/)
 
-      expect(subscriber.matches?(:foo)).to be(true)
-      expect(subscriber.matches?(:fooo)).to be(true)
+      expect(subscription.matches?(:foo)).to be(true)
+      expect(subscription.matches?(:fooo)).to be(true)
 
       bus.unregister(:foo)
 
-      expect(subscriber.matches?(:foo)).to be(false)
-      expect(subscriber.matches?(:fooo)).to be(true)
+      expect(subscription.matches?(:foo)).to be(false)
+      expect(subscription.matches?(:fooo)).to be(true)
     end
 
     it 'normalizes given event name' do
@@ -298,31 +298,31 @@ RSpec.shared_examples 'bus' do
       }.to raise_error(/not registered/)
     end
 
-    it "doesn't exclude regexp subscribers when the event hasn't been registered" do
+    it "doesn't exclude regexp subscriptions when the event hasn't been registered" do
       bus = subject.new
 
-      subscriber = bus.subscribe(/foo/)
+      subscription = bus.subscribe(/foo/)
 
       expect { bus.unregister(:foo) }.to raise_error(/not registered/)
 
-      expect(subscriber.matches?(:foo)).to be(true)
+      expect(subscription.matches?(:foo)).to be(true)
     end
   end
 
-  describe '#with_subscribers' do
-    it 'returns a new instance with given subscribers', :aggregate_failures do
+  describe '#with_subscriptions' do
+    it 'returns a new instance with given subscriptions', :aggregate_failures do
       bus = subject.new
       dummy1, dummy2, dummy3 = Array.new(3) { counter.new }
       bus.register(:foo)
-      subscriber1 = bus.subscribe(:foo) { dummy1.inc }
-      subscriber2 = bus.subscribe(:foo) { dummy2.inc }
-      subscriber3 = bus.subscribe(:foo) { dummy3.inc }
+      subscription1 = bus.subscribe(:foo) { dummy1.inc }
+      subscription2 = bus.subscribe(:foo) { dummy2.inc }
+      subscription3 = bus.subscribe(:foo) { dummy3.inc }
 
-      new_bus = bus.with_subscribers([subscriber1, subscriber2])
+      new_bus = bus.with_subscriptions([subscription1, subscription2])
       new_bus.publish(:foo)
 
       expect(new_bus).not_to eq(bus)
-      expect(new_bus.subscribers).to match_array([subscriber1, subscriber2])
+      expect(new_bus.subscriptions).to match_array([subscription1, subscription2])
       expect(dummy1.count).to be(1)
       expect(dummy2.count).to be(1)
       expect(dummy3.count).to be(0)
@@ -332,7 +332,7 @@ RSpec.shared_examples 'bus' do
       bus = subject.new
       bus.register(:foo)
 
-      new_bus = bus.with_subscribers([])
+      new_bus = bus.with_subscriptions([])
 
       expect(new_bus.registry).to be(bus.registry)
     end

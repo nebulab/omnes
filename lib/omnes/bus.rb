@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'omnes/event'
-require 'omnes/subscriber'
+require 'omnes/subscription'
 require 'omnes/firing'
 require 'omnes/registry'
 
@@ -9,7 +9,7 @@ module Omnes
   # An Event Bus for pub/sub architectures
   #
   # An instance of this class works as an Event Bus middleware for publishers of
-  # events and their subscribers.
+  # events and their subscriptions.
   #
   # The same behavior can be incorporated into any class that includes the
   # {Omnes} module. See there for more details.
@@ -25,7 +25,7 @@ module Omnes
   # @example
   #   bus.publish(:foo, bar: true)
   #
-  # Lastly, you use {#subscribe} to add a subscriber to the event.
+  # Lastly, you use {#subscribe} to add a subscription to the event.
   #
   # @example
   #   bus.subscribe(:foo) do |event|
@@ -33,10 +33,10 @@ module Omnes
   #   end
   class Bus
     # @api private
-    attr_reader :subscribers, :registry
+    attr_reader :subscriptions, :registry
 
-    def initialize(subscribers: [], registry: Registry.new)
-      @subscribers = subscribers
+    def initialize(subscriptions: [], registry: Registry.new)
+      @subscriptions = subscriptions
       @registry = registry
     end
 
@@ -59,17 +59,17 @@ module Omnes
       registry.register(event_name, caller_location: caller_location)
     end
 
-    # Publishes an event, running all its subscribers
+    # Publishes an event, running all its subscriptions
     #
     # @param event_name [Symbol] Name of the event
     # @param caller_location [Thread::Backtrace::Location] Caller location
     # associated to the firing. Useful for debugging (shown in error
     # messages). It defaults to this method's caller.
     # @param **payload [Hash] Payload published with the event, meant to be
-    # consumed by subscribers
+    # consumed by subscriptions
     #
     # @return [Omnes::Firing] A firing object encapsulating metadata for
-    # the event and the originated subscriber executions
+    # the event and the originated subscription executions
     #
     # @example
     #   bus = Omnes::Bus.new
@@ -78,13 +78,13 @@ module Omnes
     def publish(event_name, caller_location: caller_locations(1)[0], **payload)
       event_name = registry.sanitize_event_name(event_name)
       event = Event.new(payload: payload, caller_location: caller_location)
-      executions = subscribers_for_event(event_name).map do |subscriber|
-        subscriber.call(event)
+      executions = subscriptions_for_event(event_name).map do |subscription|
+        subscription.call(event)
       end
       Firing.new(event: event, executions: executions)
     end
 
-    # Subscribe a subscriber to one or more events
+    # Subscribe a subscription to one or more events
     #
     # The provided block is executed every time a matching event is publshed.
     #
@@ -92,7 +92,7 @@ module Omnes
     # when a {Regexp}, a set of matching events
     # @yield Code to execute when a matching is triggered
     #
-    # @return [Omnes::Bus#Subscriber] A subscription object that can be used as
+    # @return [Omnes::Bus#Subscription] A subscription object that can be used as
     # reference in order to remove the subscription.
     #
     # @example
@@ -103,56 +103,56 @@ module Omnes
     #   end
     def subscribe(event_name_or_regexp, &block)
       event_name_or_regexp = registry.sanitize_event_name(event_name_or_regexp) unless event_name_or_regexp.is_a?(Regexp)
-      Subscriber.new(pattern: event_name_or_regexp, block: block).tap do |subscriber|
-        @subscribers << subscriber
+      Subscription.new(pattern: event_name_or_regexp, block: block).tap do |subscription|
+        @subscriptions << subscription
       end
     end
 
-    # Unsubscribes a subscriber
+    # Removes a subscription
     #
     # The subscribed is removed from the queue.
     #
-    # @param subscriber [Omnes::Subscriber]
-    def unsubscribe(subscriber)
-      @subscribers.delete(subscriber)
+    # @param subscription [Omnes::Subscription]
+    def unsubscribe(subscription)
+      @subscriptions.delete(subscription)
     end
 
     # Unregisters an event
     #
-    # Associated subscribers won't run if the event is re-registered. Direct
-    # subscribers are removed from the queue (see {#unsubscribe}), while regexp
-    # subscribers will exclude given event.
+    # Associated subscriptions won't run if the event is re-registered. Direct
+    # subscriptions are removed from the queue (see {#unsubscribe}), while regexp
+    # subscriptions will exclude given event.
     #
     # @param event_name [Symbol]
     def unregister(event_name)
       event_name = registry.sanitize_event_name(event_name)
       registry.unregister(event_name)
-      @subscribers.each do |subscriber|
-        next unless subscriber.matches?(event_name)
+      @subscriptions.each do |subscription|
+        next unless subscription.matches?(event_name)
 
-        if subscriber.regexp?
-          subscriber.exclude(event_name)
+        if subscription.regexp?
+          subscription.exclude(event_name)
         else
-          unsubscribe(subscriber)
+          unsubscribe(subscription)
         end
       end
     end
 
-    # Returns new bus with same registry and only specified subscribers
+    # Returns new bus with same registry and only specified subscriptions
     #
     # That's something useful for testing purposes, as it allows to silence
-    # subscribers that are not part of the system under test.
+    # subscriptions that are not part of the system under test.
     #
-    # @param subscribers [Array<Omnes::Subscriber>]
-    def with_subscribers(subscribers)
-      self.class.new(subscribers: subscribers, registry: registry)
+    # @param subscriptions [Array<Omnes::Subscription>]
+    def with_subscriptions(subscriptions)
+      self.class.new(subscriptions: subscriptions, registry: registry)
     end
 
     private
 
-    def subscribers_for_event(event_name)
-      @subscribers.select do |subscriber|
-        subscriber.matches?(event_name)
+    def subscriptions_for_event(event_name)
+      @subscriptions.select do |subscription|
+        subscription.matches?(event_name)
       end
     end
   end
