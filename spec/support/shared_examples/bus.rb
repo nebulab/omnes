@@ -163,6 +163,39 @@ RSpec.shared_examples 'bus' do
   end
 
   describe '#subscribe' do
+    it 'can subscribe as a block' do
+      bus = subject.new
+      bus.register(:foo)
+
+      bus.subscribe(:foo) { :foo }
+
+      subscription = bus.subscriptions.first
+      expect(subscription.block.call).to be(:foo)
+    end
+
+    it 'can subscribe as anything callable' do
+      bus = subject.new
+      bus.register(:foo)
+      callable = proc { :foo }
+
+
+      bus.subscribe(:foo, callable)
+
+      subscription = bus.subscriptions.first
+      expect(subscription.block.call).to be(:foo)
+    end
+
+    it 'callable takes precedence over block' do
+      bus = subject.new
+      bus.register(:foo)
+      callable = proc { :foo }
+
+      bus.subscribe(:foo, callable) { :bar }
+
+      subscription = bus.subscriptions.first
+      expect(subscription.block.call).to be(:foo)
+    end
+
     it 'registers to matching event', :aggregate_failures do
       bus = subject.new
       bus.register(:foo)

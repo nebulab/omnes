@@ -86,11 +86,13 @@ module Omnes
 
     # Subscribe a subscription to one or more events
     #
-    # The provided block is executed every time a matching event is publshed.
+    # The provided callable object or block is executed every time a matching
+    # event is published.
     #
     # @param event_name_or_regexp [Symbol, Regexp] The name of the event or,
     # when a {Regexp}, a set of matching events
-    # @yield Code to execute when a matching is triggered
+    # @param callable [#call] Code to execute when a matching is triggered
+    # @yield Alternative way to provide the code to execute
     #
     # @return [Omnes::Bus#Subscription] A subscription object that can be used as
     # reference in order to remove the subscription.
@@ -101,7 +103,8 @@ module Omnes
     #   bus.subscribe(:foo) do |event|
     #     do_something if event.payload[:foo]
     #   end
-    def subscribe(event_name_or_regexp, &block)
+    def subscribe(event_name_or_regexp, callable = nil, &block)
+      block = callable || block
       event_name_or_regexp = registry.sanitize_event_name(event_name_or_regexp) unless event_name_or_regexp.is_a?(Regexp)
       Subscription.new(pattern: event_name_or_regexp, block: block).tap do |subscription|
         @subscriptions << subscription
