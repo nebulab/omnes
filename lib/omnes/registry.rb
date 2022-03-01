@@ -25,18 +25,10 @@ module Omnes
     def register(event_name, caller_location: caller_locations(1)[0])
       raise InvalidEventNameError.new(event_name: event_name) unless event_name.is_a?(Symbol)
       registration = registration(event_name)
-      if registration
-        raise <<~MSG
-            Can't register #{event_name} event as it's already registered.
+      raise AlreadyRegisteredEventError.new(event_name: event_name, registration: registration) if registration
 
-            The registration happened at:
-
-            #{registration.caller_location}
-        MSG
-      else
-        Registration.new(event_name: event_name, caller_location: caller_location).tap do |reg|
-          @registrations << reg
-        end
+      Registration.new(event_name: event_name, caller_location: caller_location).tap do |reg|
+        @registrations << reg
       end
     end
 
@@ -61,26 +53,7 @@ module Omnes
     def check_event_name(event_name)
       return if registered?(event_name)
 
-      raise EventNotKnownError.new(event_name: event_name), <<~MSG
-        '#{event_name}' is not registered as a valid event name.
-        #{suggestions_message(event_name)}
-
-        All known events are:
-
-          '#{event_names.join("', '")}'
-      MSG
-    end
-
-    private
-
-    def suggestions(event_name)
-      dictionary = DidYouMean::SpellChecker.new(dictionary: event_names)
-
-      dictionary.correct(event_name)
-    end
-
-    def suggestions_message(event_name)
-      DidYouMean::PlainFormatter.new.message_for(suggestions(event_name))
+      raise UnknownEventError.new(event_name: event_name, known_events: event_names)
     end
   end
 end

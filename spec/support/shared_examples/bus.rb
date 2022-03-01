@@ -30,7 +30,7 @@ RSpec.shared_examples 'bus' do
 
       expect {
         bus.register(:foo)
-      }.to raise_error(/already registered.*#{__FILE__}/m)
+      }.to raise_error(Omnes::AlreadyRegisteredEventError, /already registered.*#{__FILE__}/m)
     end
   end
 
@@ -147,7 +147,7 @@ RSpec.shared_examples 'bus' do
 
       expect {
         bus.publish(:foo)
-      }.to raise_error(/not registered/)
+      }.to raise_error(Omnes::UnknownEventError, /not registered/)
     end
   end
 
@@ -215,7 +215,7 @@ RSpec.shared_examples 'bus' do
 
       expect {
         bus.subscribe(:foo)
-      }.to raise_error(/not registered/)
+      }.to raise_error(Omnes::UnknownEventError, /not registered/)
     end
   end
 
@@ -296,7 +296,7 @@ RSpec.shared_examples 'bus' do
 
       expect {
         bus.unregister(:foo)
-      }.to raise_error(/not registered/)
+      }.to raise_error(Omnes::UnknownEventError, /not registered/)
     end
 
     it "doesn't exclude regexp subscriptions when the event hasn't been registered" do
@@ -304,7 +304,7 @@ RSpec.shared_examples 'bus' do
 
       subscription = bus.subscribe(/foo/)
 
-      expect { bus.unregister(:foo) }.to raise_error(/not registered/)
+      expect { bus.unregister(:foo) }.to raise_error(Omnes::UnknownEventError, /not registered/)
 
       expect(subscription.matches?(:foo)).to be(true)
     end

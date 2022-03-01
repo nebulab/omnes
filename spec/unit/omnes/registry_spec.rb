@@ -36,7 +36,7 @@ RSpec.describe Omnes::Registry do
 
       expect {
         registry.register(:foo)
-      }.to raise_error(/already registered.*#{__FILE__}/m)
+      }.to raise_error(Omnes::AlreadyRegisteredEventError, /already registered.*#{__FILE__}/m)
     end
 
     it 'raises when given event name is not a Symbol' do
@@ -64,7 +64,7 @@ RSpec.describe Omnes::Registry do
 
       expect {
         registry.unregister(:foo)
-      }.to raise_error(/not registered.*bar/m)
+      }.to raise_error(Omnes::UnknownEventError, /not registered.*bar/m)
     end
   end
 
@@ -115,7 +115,7 @@ RSpec.describe Omnes::Registry do
 
       expect {
         registry.check_event_name(:foo)
-      }.to raise_error(/not registered/)
+      }.to raise_error(Omnes::UnknownEventError, /not registered/)
     end
 
     it 'includes available events on the error message' do

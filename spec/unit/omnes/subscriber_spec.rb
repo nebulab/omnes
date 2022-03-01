@@ -196,7 +196,7 @@ RSpec.describe Omnes::Subscriber do
       expect {
         subscriber_class.new.subscribe_to(bus)
       }.to raise_error(
-        Omnes::EventNotKnownError
+        Omnes::UnknownEventError
       )
     end
 

@@ -54,6 +54,10 @@ module Omnes
     # associated to the registration. Useful for debugging (shown in error
     # messages). It defaults to this method's caller.
     #
+    # @raise [Omnes::AlreadyRegisteredEventError] when the event is already
+    # registered
+    # @raise [Omnes::InvalidEventNameError] when the event is not a {Symbol}
+    #
     # @return [Omnes::Registry::Registration]
     def register(event_name, caller_location: caller_locations(1)[0])
       registry.register(event_name, caller_location: caller_location)
