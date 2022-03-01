@@ -142,17 +142,6 @@ RSpec.shared_examples 'bus' do
       expect(executions.map(&:result)).to match([1, 2])
     end
 
-    it 'normalizes given event name' do
-      bus = subject.new
-      dummy = counter.new
-      bus.register(:foo)
-      bus.subscribe(:foo) { dummy.inc }
-
-      bus.publish 'foo'
-
-      expect(dummy.count).to be(1)
-    end
-
     it "raises when the published event hasn't been registered" do
       bus = subject.new
 
@@ -228,18 +217,6 @@ RSpec.shared_examples 'bus' do
         bus.subscribe(:foo)
       }.to raise_error(/not registered/)
     end
-
-    it 'normalizes given event name' do
-      bus = subject.new
-      bus.register(:foo)
-
-      block = -> {}
-      bus.subscribe('foo', &block)
-
-      subscription = bus.subscriptions.first
-      expect(subscription.pattern).to be(:foo)
-      expect(subscription.block.object_id).to eq(block.object_id)
-    end
   end
 
   describe '#unsubscribe' do
@@ -312,15 +289,6 @@ RSpec.shared_examples 'bus' do
 
       expect(subscription.matches?(:foo)).to be(false)
       expect(subscription.matches?(:fooo)).to be(true)
-    end
-
-    it 'normalizes given event name' do
-      bus = subject.new
-      bus.register(:foo)
-
-      bus.unregister('foo')
-
-      expect(bus.registry.registered?(:foo)).to be(false)
     end
 
     it "raises when given event name hasn't been registered" do

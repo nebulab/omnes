@@ -23,7 +23,7 @@ module Omnes
     end
 
     def register(event_name, caller_location: caller_locations(1)[0])
-      event_name = normalize_event_name(event_name)
+      raise InvalidEventNameError.new(event_name: event_name) unless event_name.is_a?(Symbol)
       registration = registration(event_name)
       if registration
         raise <<~MSG
@@ -41,25 +41,16 @@ module Omnes
     end
 
     def unregister(event_name)
-      event_name = normalize_event_name(event_name)
-      raise <<~MSG unless registered?(event_name)
-          #{event_name} is not registered.
-
-          Known events are:
-
-            '#{event_names.join("' '")}'
-      MSG
+      check_event_name(event_name)
 
       @registrations.delete_if { |regs| regs.event_name == event_name }
     end
 
     def registration(event_name)
-      event_name = normalize_event_name(event_name)
       registrations.find { |reg| reg.event_name == event_name }
     end
 
     def registered?(event_name)
-      event_name = normalize_event_name(event_name)
       !registration(event_name).nil?
     end
 
@@ -67,9 +58,8 @@ module Omnes
       registrations.map(&:event_name)
     end
 
-    def sanitize_event_name(event_name)
-      event_name = normalize_event_name(event_name)
-      return event_name if registered?(event_name)
+    def check_event_name(event_name)
+      return if registered?(event_name)
 
       raise EventNotKnownError.new(event_name: event_name), <<~MSG
         '#{event_name}' is not registered as a valid event name.
@@ -82,10 +72,6 @@ module Omnes
     end
 
     private
-
-    def normalize_event_name(event_name)
-      event_name.to_sym
-    end
 
     def suggestions(event_name)
       dictionary = DidYouMean::SpellChecker.new(dictionary: event_names)

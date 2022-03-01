@@ -13,14 +13,6 @@ RSpec.describe Omnes::Registry do
       expect(registry.registered?(:foo)).to be(true)
     end
 
-    it 'normalizes to Symbol when given as a String' do
-      registry = described_class.new
-
-      registry.register('foo')
-
-      expect(registry.registered?(:foo)).to be(true)
-    end
-
     it 'adds given caller location to the registration' do
       registry = described_class.new
 
@@ -46,6 +38,14 @@ RSpec.describe Omnes::Registry do
         registry.register(:foo)
       }.to raise_error(/already registered.*#{__FILE__}/m)
     end
+
+    it 'raises when given event name is not a Symbol' do
+      registry = described_class.new
+
+      expect {
+        registry.register('foo', caller_location: caller_locations(0)[0])
+      }.to raise_error(Omnes::InvalidEventNameError)
+    end
   end
 
   describe '#unregister' do
@@ -54,15 +54,6 @@ RSpec.describe Omnes::Registry do
       registry.register(:foo)
 
       registry.unregister(:foo)
-
-      expect(registry.registered?(:foo)).to be(false)
-    end
-
-    it 'normalizes to Symbol when given as a String' do
-      registry = described_class.new
-      registry.register(:foo)
-
-      registry.unregister('foo')
 
       expect(registry.registered?(:foo)).to be(false)
     end
@@ -86,14 +77,6 @@ RSpec.describe Omnes::Registry do
       expect(registry.registration(:foo).event_name).to eq(:foo)
     end
 
-    it 'normalizes to Symbol when given as a String' do
-      registry = described_class.new
-
-      registry.register(:foo)
-
-      expect(registry.registration('foo').event_name).to eq(:foo)
-    end
-
     it 'returns nil when the event name is not found' do
       registry = described_class.new
 
@@ -107,13 +90,6 @@ RSpec.describe Omnes::Registry do
       registry.register(:foo)
 
       expect(registry.registered?(:foo)).to be(true)
-    end
-
-    it 'normalizes to Symbol if given as a String' do
-      registry = described_class.new
-      registry.register(:foo)
-
-      expect(registry.registered?('foo')).to be(true)
     end
 
     it 'returns false when given event name is not registered' do
@@ -133,26 +109,12 @@ RSpec.describe Omnes::Registry do
     end
   end
 
-  describe '#sanitize_event_name' do
-    it "returns without changes when it's a Symbol" do
-      registry = described_class.new
-      registry.register(:foo)
-
-      expect(registry.sanitize_event_name(:foo)).to be(:foo)
-    end
-
-    it 'returns as a Symbol when given as a String' do
-      registry = described_class.new
-      registry.register(:foo)
-
-      expect(registry.sanitize_event_name('foo')).to be(:foo)
-    end
-
+  describe '#check_event_name' do
     it 'raises when the event is not registered' do
       registry = described_class.new
 
       expect {
-        registry.sanitize_event_name(:foo)
+        registry.check_event_name(:foo)
       }.to raise_error(/not registered/)
     end
 
@@ -162,7 +124,7 @@ RSpec.describe Omnes::Registry do
       registry.register(:baz)
 
       expect {
-        registry.sanitize_event_name(:foo)
+        registry.check_event_name(:foo)
       }.to raise_error(/'bar', 'baz'/)
     end
 
@@ -171,7 +133,7 @@ RSpec.describe Omnes::Registry do
       registry.register(:foo)
 
       expect {
-        registry.sanitize_event_name(:fo)
+        registry.check_event_name(:fo)
       }.to raise_error(/Did you mean\?  foo/)
     end
   end
