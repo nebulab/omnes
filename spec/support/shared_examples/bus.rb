@@ -57,17 +57,6 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(1)
     end
 
-    it 'executes regexp subscriptions for given event name' do
-      bus = subject.new
-      dummy = counter.new
-      bus.register(:foo)
-      bus.subscribe(/oo/) { dummy.inc }
-
-      bus.publish :foo
-
-      expect(dummy.count).to be(1)
-    end
-
     it "doesn't execute other event subscriptions" do
       bus = subject.new
       dummy = counter.new
@@ -197,19 +186,6 @@ RSpec.shared_examples 'bus' do
       expect(subscription.block.object_id).to eq(block.object_id)
     end
 
-    it 'registers to matching event as a regexp', :aggregate_failures do
-      bus = subject.new
-      bus.register(:foo)
-
-      block = -> {}
-      pattern = /oo/
-      bus.subscribe(pattern, &block)
-
-      subscription = bus.subscriptions.first
-      expect(subscription.pattern).to be(pattern)
-      expect(subscription.block.object_id).to eq(block.object_id)
-    end
-
     it "raises when given event name hasn't been registered" do
       bus = subject.new
 
@@ -264,49 +240,12 @@ RSpec.shared_examples 'bus' do
       expect(bus.subscriptions).to include(subscription)
     end
 
-    it 'excludes events for regexp subscriptions that match the event' do
-      bus = subject.new
-      bus.register(:foo)
-      subscription = bus.subscribe(/foo/)
-
-      expect(subscription.matches?(:foo)).to be(true)
-
-      bus.unregister(:foo)
-
-      expect(subscription.matches?(:foo)).to be(false)
-    end
-
-    it "doesn't exclude the subscription to partial matches on the event" do
-      bus = subject.new
-      bus.register(:foo)
-      bus.register(:fooo)
-      subscription = bus.subscribe(/foo/)
-
-      expect(subscription.matches?(:foo)).to be(true)
-      expect(subscription.matches?(:fooo)).to be(true)
-
-      bus.unregister(:foo)
-
-      expect(subscription.matches?(:foo)).to be(false)
-      expect(subscription.matches?(:fooo)).to be(true)
-    end
-
     it "raises when given event name hasn't been registered" do
       bus = subject.new
 
       expect {
         bus.unregister(:foo)
       }.to raise_error(Omnes::UnknownEventError, /not registered/)
-    end
-
-    it "doesn't exclude regexp subscriptions when the event hasn't been registered" do
-      bus = subject.new
-
-      subscription = bus.subscribe(/foo/)
-
-      expect { bus.unregister(:foo) }.to raise_error(Omnes::UnknownEventError, /not registered/)
-
-      expect(subscription.matches?(:foo)).to be(true)
     end
   end
 

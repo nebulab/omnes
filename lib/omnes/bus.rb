@@ -93,8 +93,7 @@ module Omnes
     # The provided callable object or block is executed every time a matching
     # event is published.
     #
-    # @param event_name_or_regexp [Symbol, Regexp] The name of the event or,
-    # when a {Regexp}, a set of matching events
+    # @param event_name [Symbol] The name of the event
     # @param callable [#call] Code to execute when a matching is triggered
     # @yield Alternative way to provide the code to execute
     #
@@ -107,10 +106,10 @@ module Omnes
     #   bus.subscribe(:foo) do |event|
     #     do_something if event.payload[:foo]
     #   end
-    def subscribe(event_name_or_regexp, callable = nil, &block)
+    def subscribe(event_name, callable = nil, &block)
       block = callable || block
-      registry.check_event_name(event_name_or_regexp) unless event_name_or_regexp.is_a?(Regexp)
-      Subscription.new(pattern: event_name_or_regexp, block: block).tap do |subscription|
+      registry.check_event_name(event_name)
+      Subscription.new(pattern: event_name, block: block).tap do |subscription|
         @subscriptions << subscription
       end
     end
@@ -126,9 +125,7 @@ module Omnes
 
     # Unregisters an event
     #
-    # Associated subscriptions won't run if the event is re-registered. Direct
-    # subscriptions are removed from the queue (see {#unsubscribe}), while regexp
-    # subscriptions will exclude given event.
+    # Unregisters the event and removes associated subscriptions.
     #
     # @param event_name [Symbol]
     def unregister(event_name)
@@ -136,11 +133,7 @@ module Omnes
       @subscriptions.each do |subscription|
         next unless subscription.matches?(event_name)
 
-        if subscription.regexp?
-          subscription.exclude(event_name)
-        else
-          unsubscribe(subscription)
-        end
+        unsubscribe(subscription)
       end
     end
 

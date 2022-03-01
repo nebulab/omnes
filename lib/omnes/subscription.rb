@@ -24,7 +24,6 @@ module Omnes
     def initialize(pattern:, block:)
       @pattern = pattern
       @block = block
-      @exclusions = []
     end
 
     # @api private
@@ -39,29 +38,12 @@ module Omnes
 
     # @api private
     def matches?(event_name)
-      pattern === event_name &&
-        !excludes?(event_name)
-    end
-
-    # @api private
-    def exclude(event_name)
-      @exclusions << event_name
+      pattern === event_name
     end
 
     # @api private
     def subscriptions
       [self]
-    end
-
-    # @api private
-    def regexp?
-      pattern.is_a?(Regexp)
-    end
-
-    private
-
-    def excludes?(event_name)
-      @exclusions.include?(event_name)
     end
   end
 end
