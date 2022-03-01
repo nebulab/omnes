@@ -106,26 +106,26 @@ RSpec.shared_examples 'bus' do
       expect(dummy.box).to eq('foo')
     end
 
-    it 'adds the published event with given caller location to the firing result object' do
+    it 'adds the published event with given caller location to the publication result object' do
       bus = subject.new
       bus.register(:foo)
       bus.subscribe(:foo) { :work }
 
-      firing = bus.publish :foo, caller_location: caller_locations(0)[0]
+      publication = bus.publish :foo, caller_location: caller_locations(0)[0]
 
-      expect(firing.event.caller_location.to_s).to include(__FILE__)
+      expect(publication.event.caller_location.to_s).to include(__FILE__)
     end
 
-    it 'adds the triggered executions to the firing result object', :aggregate_failures do
+    it 'adds the triggered executions to the publication result object', :aggregate_failures do
       bus = subject.new
       dummy = counter.new
       bus.register(:foo)
       subscription1 = bus.subscribe(:foo) { dummy.inc }
       subscription2 = bus.subscribe(:foo) { dummy.inc }
 
-      firing = bus.publish :foo
+      publication = bus.publish :foo
 
-      executions = firing.executions
+      executions = publication.executions
       expect(executions.count).to be(2)
       expect(executions.map(&:subscription)).to match([subscription1, subscription2])
       expect(executions.map(&:result)).to match([1, 2])

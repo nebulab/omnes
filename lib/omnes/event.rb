@@ -24,10 +24,10 @@ module Omnes
     # @return [Hash]
     attr_reader :payload
 
-    # Time of the event firing
+    # Time of the event publication
     #
     # @return [Time]
-    attr_reader :firing_time
+    attr_reader :publication_time
 
     # Location for the event caller
     #
@@ -38,10 +38,10 @@ module Omnes
     attr_reader :caller_location
 
     # @api private
-    def initialize(payload:, caller_location:, firing_time: Time.now.utc)
+    def initialize(payload:, caller_location:, publication_time: Time.now.utc)
       @payload = payload
       @caller_location = caller_location
-      @firing_time = firing_time
+      @publication_time = publication_time
     end
 
     # Delegates to {#payload}

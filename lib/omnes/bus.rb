@@ -2,7 +2,7 @@
 
 require 'omnes/event'
 require 'omnes/subscription'
-require 'omnes/firing'
+require 'omnes/publication'
 require 'omnes/registry'
 
 module Omnes
@@ -42,7 +42,7 @@ module Omnes
 
     # Registers an event
     #
-    # This step is needed before firing, subscribing or unsubscribing an
+    # This step is needed before publishing, subscribing or unsubscribing an
     # event. It helps to prevent typos and naming collision.
     #
     # @example
@@ -67,12 +67,12 @@ module Omnes
     #
     # @param event_name [Symbol] Name of the event
     # @param caller_location [Thread::Backtrace::Location] Caller location
-    # associated to the firing. Useful for debugging (shown in error
+    # associated to the publication. Useful for debugging (shown in error
     # messages). It defaults to this method's caller.
     # @param **payload [Hash] Payload published with the event, meant to be
     # consumed by subscriptions
     #
-    # @return [Omnes::Firing] A firing object encapsulating metadata for
+    # @return [Omnes::Publication] A publication object encapsulating metadata for
     # the event and the originated subscription executions
     #
     # @example
@@ -85,7 +85,7 @@ module Omnes
       executions = subscriptions_for_event(event_name).map do |subscription|
         subscription.call(event)
       end
-      Firing.new(event: event, executions: executions)
+      Publication.new(event: event, executions: executions)
     end
 
     # Subscribe a subscription to one or more events
