@@ -6,8 +6,6 @@ module Omnes
     class Subscriptions
       # @!attribute [r] subscriptions
       #   @return [Array<Omnes::Subscription>] All subscriptions
-      attr_reader :subscriptions
-
       # @api private
       def initialize(subscriptions:)
         @subscriptions = subscriptions
@@ -33,6 +31,30 @@ module Omnes
         subscriptions.filter_map do |subscription|
           (subscription.block.name == method_name) && subscription.pattern
         end
+      end
+
+      # Wrapped subscriptions
+      #
+      # @param event_name [Symbol] Limit to those subscribed to given event name
+      # @param method_name [Symbol] Limit to those subscribed by means of given method name
+      #
+      # @return [Array<Omnes::Subscription>] All subscriptions
+      def subscriptions(event_name: nil, method_name: nil)
+        @subscriptions.yield_self do |subs|
+          event_name ? subscriptions_for_event_name(subs, event_name) : subs
+        end.yield_self do |subs|
+          method_name ? subscriptions_for_method_name(subs, method_name) : subs
+        end
+      end
+
+      private
+
+      def subscriptions_for_event_name(subscriptions, event_name)
+        subscriptions.select { |subscriber| subscriber.pattern == event_name }
+      end
+
+      def subscriptions_for_method_name(subscriptions, method_name)
+        subscriptions.select { |subscriber| subscriber.block.name == method_name }
       end
     end
   end
