@@ -130,9 +130,7 @@ module Omnes
     # @param event_name [Symbol]
     def unregister(event_name)
       registry.unregister(event_name)
-      @subscriptions.each do |subscription|
-        next unless subscription.matches?(event_name)
-
+      subscriptions_for_event(event_name).each do |subscription|
         unsubscribe(subscription)
       end
     end
