@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'omnes/subscription'
+require "spec_helper"
+require "omnes/subscription"
 
 RSpec.describe Omnes::Subscription do
-  describe '#call' do
-    it 'returns an execution instance' do
+  describe "#call" do
+    it "returns an execution instance" do
       subscription = described_class.new(pattern: :foo, block: proc {})
 
       expect(subscription.call(:event)).to be_a(Omnes::Execution)
@@ -19,8 +19,8 @@ RSpec.describe Omnes::Subscription do
       expect(execution.result).to eq(:bar)
     end
 
-    it 'sets itself as the execution subscription' do
-      subscription = described_class.new(pattern: :foo, block: proc { 'foo' })
+    it "sets itself as the execution subscription" do
+      subscription = described_class.new(pattern: :foo, block: proc { "foo" })
 
       execution = subscription.call(:event)
 
@@ -28,7 +28,7 @@ RSpec.describe Omnes::Subscription do
     end
 
     it "sets the execution's benchmark" do
-      subscription = described_class.new(pattern: :foo, block: proc { 'foo' })
+      subscription = described_class.new(pattern: :foo, block: proc { "foo" })
 
       execution = subscription.call(:event)
 
@@ -36,8 +36,8 @@ RSpec.describe Omnes::Subscription do
     end
   end
 
-  describe '#matches?' do
-    it 'return true when given event name is equal to the pattern' do
+  describe "#matches?" do
+    it "return true when given event name is equal to the pattern" do
       subscription = described_class.new(pattern: :foo, block: -> {})
 
       expect(subscription.matches?(:foo)).to be(true)
@@ -50,8 +50,8 @@ RSpec.describe Omnes::Subscription do
     end
   end
 
-  describe '#subscriptions' do
-    it 'returns a list containing only itself' do
+  describe "#subscriptions" do
+    it "returns a list containing only itself" do
       subscription = described_class.new(pattern: :foo, block: -> {})
 
       expect(subscription.subscriptions).to eq([subscription])

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'benchmark'
-require 'omnes/execution'
+require "benchmark"
+require "omnes/execution"
 
 module Omnes
   # Subscription to an event

@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
-require 'omnes/version'
-require 'omnes/bus'
+require "omnes/version"
+require "omnes/bus"
 
+# Pub/sub bus behavior
+#
+# Include this module to have a class work as an {Omnes::Bus}.
 module Omnes
   def self.included(klass)
     bus = Bus.new

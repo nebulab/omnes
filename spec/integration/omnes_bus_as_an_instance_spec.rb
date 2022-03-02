@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'omnes/bus'
+require "omnes/bus"
 
-RSpec.describe 'Omnes bus as an instance' do
-  it 'can be used as a standalone instance' do
+RSpec.describe "Omnes bus as an instance" do
+  it "can be used as a standalone instance" do
     klass = Class.new do
       attr_reader :bus, :dependency
 

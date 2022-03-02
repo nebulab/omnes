@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'omnes/event'
-require 'omnes/subscription'
-require 'omnes/publication'
-require 'omnes/registry'
+require "omnes/event"
+require "omnes/subscription"
+require "omnes/publication"
+require "omnes/registry"
 
 module Omnes
   # An Event Bus for pub/sub architectures

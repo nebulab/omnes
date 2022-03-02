@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'omnes/subscriber/errors'
-require 'omnes/subscriber/subscriptions'
+require "omnes/subscriber/errors"
+require "omnes/subscriber/subscriptions"
 
 module Omnes
   module Subscriber
@@ -47,8 +47,14 @@ module Omnes
       end
 
       def check_method(event_name, method_name, context)
-        raise PrivateMethodSubscriptionAttemptError.new(event_name: event_name, method_name: method_name) if context.private_methods.include?(method_name)
-        raise UnknownMethodSubscriptionAttemptError.new(event_name: event_name, method_name: method_name) unless context.methods.include?(method_name)
+        if context.private_methods.include?(method_name)
+          raise PrivateMethodSubscriptionAttemptError.new(event_name: event_name,
+                                                          method_name: method_name)
+        end
+        return if context.methods.include?(method_name)
+
+        raise UnknownMethodSubscriptionAttemptError.new(event_name: event_name,
+                                                        method_name: method_name)
       end
 
       def subscribe_definitions(definitions, bus, context)

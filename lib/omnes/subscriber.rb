@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'omnes/subscriber/state'
+require "omnes/subscriber/state"
 
 module Omnes
   # Supscription provider for an {Omnes::Bus}

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'omnes'
+require "omnes"
 
-RSpec.describe 'Omnes included' do
-  it 'can be used included' do
+RSpec.describe "Omnes included" do
+  it "can be used included" do
     klass = Class.new do
       include Omnes
 

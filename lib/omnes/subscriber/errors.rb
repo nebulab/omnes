@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'omnes/errors'
+require "omnes/errors"
 
 module Omnes
   module Subscriber

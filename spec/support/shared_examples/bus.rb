@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.shared_examples 'bus' do
+RSpec.shared_examples "bus" do
   let(:counter) do
     Class.new do
       attr_reader :count
@@ -15,8 +15,8 @@ RSpec.shared_examples 'bus' do
     end
   end
 
-  describe '#register' do
-    it 'adds the event to the register' do
+  describe "#register" do
+    it "adds the event to the register" do
       bus = subject.new
 
       bus.register(:foo)
@@ -24,7 +24,7 @@ RSpec.shared_examples 'bus' do
       expect(bus.registry.registered?(:foo)).to be(true)
     end
 
-    it 'raises when the event is already in the registry' do
+    it "raises when the event is already in the registry" do
       bus = subject.new
       bus.register(:foo, caller_location: caller_locations(0)[0])
 
@@ -34,8 +34,8 @@ RSpec.shared_examples 'bus' do
     end
   end
 
-  describe '#publish' do
-    it 'executes direct subscriptions for given event name' do
+  describe "#publish" do
+    it "executes direct subscriptions for given event name" do
       bus = subject.new
       dummy = counter.new
       bus.register(:foo)
@@ -46,7 +46,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(1)
     end
 
-    it 'executes plain subscriptions for given event name' do
+    it "executes plain subscriptions for given event name" do
       bus = subject.new
       dummy = counter.new
       bus.register(:foo)
@@ -93,7 +93,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy.count).to be(0)
     end
 
-    it 'yields the given options to the subscription as the event payload' do
+    it "yields the given options to the subscription as the event payload" do
       bus = subject.new
       dummy = Class.new do
         attr_accessor :box
@@ -101,12 +101,12 @@ RSpec.shared_examples 'bus' do
       bus.register(:foo)
       bus.subscribe(:foo) { |event| dummy.box = event.payload[:box] }
 
-      bus.publish :foo, box: 'foo'
+      bus.publish :foo, box: "foo"
 
-      expect(dummy.box).to eq('foo')
+      expect(dummy.box).to eq("foo")
     end
 
-    it 'adds the published event with given caller location to the publication result object' do
+    it "adds the published event with given caller location to the publication result object" do
       bus = subject.new
       bus.register(:foo)
       bus.subscribe(:foo) { :work }
@@ -116,7 +116,7 @@ RSpec.shared_examples 'bus' do
       expect(publication.event.caller_location.to_s).to include(__FILE__)
     end
 
-    it 'adds the triggered executions to the publication result object', :aggregate_failures do
+    it "adds the triggered executions to the publication result object", :aggregate_failures do
       bus = subject.new
       dummy = counter.new
       bus.register(:foo)
@@ -140,8 +140,8 @@ RSpec.shared_examples 'bus' do
     end
   end
 
-  describe '#subscribe' do
-    it 'can subscribe as a block' do
+  describe "#subscribe" do
+    it "can subscribe as a block" do
       bus = subject.new
       bus.register(:foo)
 
@@ -151,11 +151,10 @@ RSpec.shared_examples 'bus' do
       expect(subscription.block.call).to be(:foo)
     end
 
-    it 'can subscribe as anything callable' do
+    it "can subscribe as anything callable" do
       bus = subject.new
       bus.register(:foo)
       callable = proc { :foo }
-
 
       bus.subscribe(:foo, callable)
 
@@ -163,7 +162,7 @@ RSpec.shared_examples 'bus' do
       expect(subscription.block.call).to be(:foo)
     end
 
-    it 'callable takes precedence over block' do
+    it "callable takes precedence over block" do
       bus = subject.new
       bus.register(:foo)
       callable = proc { :foo }
@@ -174,7 +173,7 @@ RSpec.shared_examples 'bus' do
       expect(subscription.block.call).to be(:foo)
     end
 
-    it 'registers to matching event', :aggregate_failures do
+    it "registers to matching event", :aggregate_failures do
       bus = subject.new
       bus.register(:foo)
 
@@ -195,8 +194,8 @@ RSpec.shared_examples 'bus' do
     end
   end
 
-  describe '#unsubscribe' do
-    it 'removes given subscription' do
+  describe "#unsubscribe" do
+    it "removes given subscription" do
       bus = subject.new
       dummy = counter.new
       bus.register(:foo)
@@ -209,8 +208,8 @@ RSpec.shared_examples 'bus' do
     end
   end
 
-  describe '#unregister' do
-    it 'removes the event from the registry' do
+  describe "#unregister" do
+    it "removes the event from the registry" do
       bus = subject.new
       bus.register(:foo)
 
@@ -219,7 +218,7 @@ RSpec.shared_examples 'bus' do
       expect(bus.registry.registered?(:foo)).to be(false)
     end
 
-    it 'removes subscriptions for that event' do
+    it "removes subscriptions for that event" do
       bus = subject.new
       bus.register(:foo)
       subscription = bus.subscribe(:foo)
@@ -249,14 +248,14 @@ RSpec.shared_examples 'bus' do
     end
   end
 
-  describe '#with_subscriptions' do
-    it 'returns a new instance with given subscriptions', :aggregate_failures do
+  describe "#with_subscriptions" do
+    it "returns a new instance with given subscriptions", :aggregate_failures do
       bus = subject.new
       dummy1, dummy2, dummy3 = Array.new(3) { counter.new }
       bus.register(:foo)
       subscription1 = bus.subscribe(:foo) { dummy1.inc }
       subscription2 = bus.subscribe(:foo) { dummy2.inc }
-      subscription3 = bus.subscribe(:foo) { dummy3.inc }
+      bus.subscribe(:foo) { dummy3.inc }
 
       new_bus = bus.with_subscriptions([subscription1, subscription2])
       new_bus.publish(:foo)
@@ -268,7 +267,7 @@ RSpec.shared_examples 'bus' do
       expect(dummy3.count).to be(0)
     end
 
-    it 'keeps the same registry' do
+    it "keeps the same registry" do
       bus = subject.new
       bus.register(:foo)
 

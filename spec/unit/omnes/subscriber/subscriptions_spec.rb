@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'omnes/subscriber/subscriptions'
-require 'omnes/subscription'
+require "spec_helper"
+require "omnes/subscriber/subscriptions"
+require "omnes/subscription"
 
 RSpec.describe Omnes::Subscriber::Subscriptions do
   let(:subscription_class) { Omnes::Subscription }
 
-  describe '#method_names' do
+  describe "#method_names" do
     it "returns subscribers' method names for given event" do
       context = Class.new do
         def method_one; end
@@ -26,7 +26,7 @@ RSpec.describe Omnes::Subscriber::Subscriptions do
     end
   end
 
-  describe '#event_names' do
+  describe "#event_names" do
     it "returns subscribers' event names for given method name" do
       context = Class.new do
         def method_one; end
@@ -44,8 +44,8 @@ RSpec.describe Omnes::Subscriber::Subscriptions do
     end
   end
 
-  describe '#subscriptions' do
-    it 'returns all subscriptions' do
+  describe "#subscriptions" do
+    it "returns all subscriptions" do
       context = Class.new do
         def method_one; end
       end.new
@@ -57,7 +57,7 @@ RSpec.describe Omnes::Subscriber::Subscriptions do
       expect(subscriptions.subscriptions).to eq([subscription])
     end
 
-    it 'returns subscriptions matching given event name' do
+    it "returns subscriptions matching given event name" do
       context = Class.new do
         def method_one; end
       end.new
@@ -70,7 +70,7 @@ RSpec.describe Omnes::Subscriber::Subscriptions do
       expect(subscriptions.subscriptions(event_name: :foo)).to eq([subscription_foo])
     end
 
-    it 'returns subscriptions matching given method name' do
+    it "returns subscriptions matching given method name" do
       context = Class.new do
         def method_one; end
         def method_two; end
@@ -84,7 +84,7 @@ RSpec.describe Omnes::Subscriber::Subscriptions do
       expect(subscriptions.subscriptions(method_name: :method_one)).to eq([subscription_one])
     end
 
-    it 'returns subscriptions matching given event and method names' do
+    it "returns subscriptions matching given event and method names" do
       context = Class.new do
         def method_one; end
         def method_two; end
@@ -96,7 +96,9 @@ RSpec.describe Omnes::Subscriber::Subscriptions do
         subscriptions: [subscription_foo_one, subscription_foo_two, subscription_bar_one]
       )
 
-      expect(subscriptions.subscriptions(event_name: :foo, method_name: :method_one)).to eq([subscription_foo_one])
+      expect(
+        subscriptions.subscriptions(event_name: :foo, method_name: :method_one)
+      ).to eq([subscription_foo_one])
     end
   end
 end
