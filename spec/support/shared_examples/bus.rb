@@ -116,7 +116,7 @@ RSpec.shared_examples "bus" do
       expect(publication.event.caller_location.to_s).to include(__FILE__)
     end
 
-    it "adds the triggered executions to the publication result object", :aggregate_failures do
+    it "adds the triggered executions to the publication result object" do
       bus = subject.new
       dummy = counter.new
       bus.register(:foo)
@@ -173,7 +173,7 @@ RSpec.shared_examples "bus" do
       expect(subscription.block.call).to be(:foo)
     end
 
-    it "registers to matching event", :aggregate_failures do
+    it "registers to matching event" do
       bus = subject.new
       bus.register(:foo)
 
@@ -249,7 +249,7 @@ RSpec.shared_examples "bus" do
   end
 
   describe "#with_subscriptions" do
-    it "returns a new instance with given subscriptions", :aggregate_failures do
+    it "returns a new instance with given subscriptions" do
       bus = subject.new
       dummy1, dummy2, dummy3 = Array.new(3) { counter.new }
       bus.register(:foo)
