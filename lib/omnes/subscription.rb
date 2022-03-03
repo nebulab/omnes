@@ -18,27 +18,27 @@ module Omnes
   #   bus.unsubscribe subscription
   class Subscription
     # @api private
-    attr_reader :pattern, :block
+    attr_reader :event_name, :callback
 
     # @api private
-    def initialize(pattern:, block:)
-      @pattern = pattern
-      @block = block
+    def initialize(event_name:, callback:)
+      @event_name = event_name
+      @callback = callback
     end
 
     # @api private
     def call(event)
       result = nil
       benchmark = Benchmark.measure do
-        result = @block.call(event)
+        result = @callback.call(event)
       end
 
       Execution.new(subscription: self, result: result, benchmark: benchmark)
     end
 
     # @api private
-    def matches?(event_name)
-      pattern == event_name
+    def matches?(candidate)
+      event_name == candidate
     end
 
     # @api private

@@ -19,8 +19,8 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.new.subscribe_to(bus)
 
       subscription = bus.subscriptions[0]
-      expect(subscription.pattern).to be(:foo)
-      expect(subscription.block.call(:event)).to be(:on_foo)
+      expect(subscription.event_name).to be(:foo)
+      expect(subscription.callback.call(:event)).to be(:on_foo)
     end
 
     it "subscribes with manually specified handlers" do
@@ -36,8 +36,8 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.new.subscribe_to(bus)
 
       subscription = bus.subscriptions[0]
-      expect(subscription.pattern).to be(:foo)
-      expect(subscription.block.call(:event)).to be(:bar)
+      expect(subscription.event_name).to be(:foo)
+      expect(subscription.callback.call(:event)).to be(:bar)
     end
 
     it "raises when trying to subscribe to an autodiscovered private method" do

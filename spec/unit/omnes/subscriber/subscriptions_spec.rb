@@ -16,9 +16,9 @@ RSpec.describe Omnes::Subscriber::Subscriptions do
       end.new
       subscriptions = described_class.new(
         subscriptions: [
-          subscription_class.new(pattern: :foo, block: context.method(:method_one)),
-          subscription_class.new(pattern: :foo, block: context.method(:method_two)),
-          subscription_class.new(pattern: :bar, block: context.method(:method_three))
+          subscription_class.new(event_name: :foo, callback: context.method(:method_one)),
+          subscription_class.new(event_name: :foo, callback: context.method(:method_two)),
+          subscription_class.new(event_name: :bar, callback: context.method(:method_three))
         ]
       )
 
@@ -34,9 +34,9 @@ RSpec.describe Omnes::Subscriber::Subscriptions do
       end.new
       subscriptions = described_class.new(
         subscriptions: [
-          subscription_class.new(pattern: :foo, block: context.method(:method_one)),
-          subscription_class.new(pattern: :bar, block: context.method(:method_one)),
-          subscription_class.new(pattern: :foo, block: context.method(:method_two))
+          subscription_class.new(event_name: :foo, callback: context.method(:method_one)),
+          subscription_class.new(event_name: :bar, callback: context.method(:method_one)),
+          subscription_class.new(event_name: :foo, callback: context.method(:method_two))
         ]
       )
 
@@ -49,7 +49,7 @@ RSpec.describe Omnes::Subscriber::Subscriptions do
       context = Class.new do
         def method_one; end
       end.new
-      subscription = subscription_class.new(pattern: :foo, block: context.method(:method_one))
+      subscription = subscription_class.new(event_name: :foo, callback: context.method(:method_one))
       subscriptions = described_class.new(
         subscriptions: [subscription]
       )
@@ -61,8 +61,8 @@ RSpec.describe Omnes::Subscriber::Subscriptions do
       context = Class.new do
         def method_one; end
       end.new
-      subscription_foo = subscription_class.new(pattern: :foo, block: context.method(:method_one))
-      subscription_bar = subscription_class.new(pattern: :bar, block: context.method(:method_one))
+      subscription_foo = subscription_class.new(event_name: :foo, callback: context.method(:method_one))
+      subscription_bar = subscription_class.new(event_name: :bar, callback: context.method(:method_one))
       subscriptions = described_class.new(
         subscriptions: [subscription_foo, subscription_bar]
       )
@@ -75,8 +75,8 @@ RSpec.describe Omnes::Subscriber::Subscriptions do
         def method_one; end
         def method_two; end
       end.new
-      subscription_one = subscription_class.new(pattern: :foo, block: context.method(:method_one))
-      subscription_two = subscription_class.new(pattern: :foo, block: context.method(:method_two))
+      subscription_one = subscription_class.new(event_name: :foo, callback: context.method(:method_one))
+      subscription_two = subscription_class.new(event_name: :foo, callback: context.method(:method_two))
       subscriptions = described_class.new(
         subscriptions: [subscription_one, subscription_two]
       )
@@ -89,9 +89,9 @@ RSpec.describe Omnes::Subscriber::Subscriptions do
         def method_one; end
         def method_two; end
       end.new
-      subscription_foo_one = subscription_class.new(pattern: :foo, block: context.method(:method_one))
-      subscription_foo_two = subscription_class.new(pattern: :foo, block: context.method(:method_two))
-      subscription_bar_one = subscription_class.new(pattern: :bar, block: context.method(:method_one))
+      subscription_foo_one = subscription_class.new(event_name: :foo, callback: context.method(:method_one))
+      subscription_foo_two = subscription_class.new(event_name: :foo, callback: context.method(:method_two))
+      subscription_bar_one = subscription_class.new(event_name: :bar, callback: context.method(:method_one))
       subscriptions = described_class.new(
         subscriptions: [subscription_foo_one, subscription_foo_two, subscription_bar_one]
       )

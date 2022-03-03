@@ -148,7 +148,7 @@ RSpec.shared_examples "bus" do
       bus.subscribe(:foo) { :foo }
 
       subscription = bus.subscriptions.first
-      expect(subscription.block.call).to be(:foo)
+      expect(subscription.callback.call).to be(:foo)
     end
 
     it "can subscribe as anything callable" do
@@ -159,7 +159,7 @@ RSpec.shared_examples "bus" do
       bus.subscribe(:foo, callable)
 
       subscription = bus.subscriptions.first
-      expect(subscription.block.call).to be(:foo)
+      expect(subscription.callback.call).to be(:foo)
     end
 
     it "callable takes precedence over block" do
@@ -170,19 +170,19 @@ RSpec.shared_examples "bus" do
       bus.subscribe(:foo, callable) { :bar }
 
       subscription = bus.subscriptions.first
-      expect(subscription.block.call).to be(:foo)
+      expect(subscription.callback.call).to be(:foo)
     end
 
     it "registers to matching event" do
       bus = subject.new
       bus.register(:foo)
 
-      block = -> {}
-      bus.subscribe(:foo, &block)
+      callback = -> {}
+      bus.subscribe(:foo, &callback)
 
       subscription = bus.subscriptions.first
-      expect(subscription.pattern).to be(:foo)
-      expect(subscription.block.object_id).to eq(block.object_id)
+      expect(subscription.event_name).to be(:foo)
+      expect(subscription.callback.object_id).to eq(callback.object_id)
     end
 
     it "raises when given event name hasn't been registered" do

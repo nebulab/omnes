@@ -107,9 +107,9 @@ module Omnes
     #     do_something if event.payload[:foo]
     #   end
     def subscribe(event_name, callable = nil, &block)
-      block = callable || block
+      callback = callable || block
       registry.check_event_name(event_name)
-      Subscription.new(pattern: event_name, block: block).tap do |subscription|
+      Subscription.new(event_name: event_name, callback: callback).tap do |subscription|
         @subscriptions << subscription
       end
     end

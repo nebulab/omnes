@@ -16,12 +16,12 @@ module Omnes
     # @return [Omnes::Subscription]
     attr_reader :subscription
 
-    # The value returned by the {#subscription}'s block
+    # The value returned by the {#subscription}'s callback
     #
     # @return [Any]
     attr_reader :result
 
-    # Benchmark for the {#subscription}'s block
+    # Benchmark for the {#subscription}'s callback
     #
     # @return [Benchmark::Tms]
     attr_reader :benchmark
