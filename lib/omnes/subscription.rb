@@ -38,7 +38,7 @@ module Omnes
 
     # @api private
     def matches?(event_name)
-      pattern === event_name
+      pattern == event_name
     end
 
     # @api private

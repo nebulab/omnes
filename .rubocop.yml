@@ -15,10 +15,6 @@ Style/BlockDelimiters:
   Exclude:
     - 'spec/**/*'
 
-Style/CaseEquality:
-  Exclude:
-    - 'lib/omnes/subscription.rb'
-
 Style/MultilineBlockChain:
   Enabled: false
 
