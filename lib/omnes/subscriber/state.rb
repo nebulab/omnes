@@ -7,14 +7,15 @@ module Omnes
   module Subscriber
     # @api private
     class State
-      attr_reader :manual_definitions
+      attr_reader :manual_definitions, :calling_cache
 
-      def initialize(manual_definitions: [])
+      def initialize(manual_definitions: [], calling_cache: [])
         @manual_definitions = manual_definitions
+        @calling_cache = calling_cache
       end
 
       def call(bus, context)
-        raise FrozenSubscriberError if frozen?
+        raise FrozenSubscriberError if calling_cache.include?([bus, context])
 
         definitions = manual_definitions + autodiscovered_definitions(bus, context)
         check_duplicates(definitions)
@@ -24,7 +25,7 @@ module Omnes
 
         Subscriptions.new(
           subscriptions: subscribe_definitions(definitions, bus, context)
-        ).tap { deep_freeze }
+        ).tap { @calling_cache << [bus, context] }
       end
 
       def add_manual_definition(event_name, with)
@@ -61,10 +62,6 @@ module Omnes
         definitions.map do |(event_name, method_name)|
           bus.subscribe(event_name, context.method(method_name))
         end
-      end
-
-      def deep_freeze
-        manual_definitions.freeze && freeze
       end
     end
   end

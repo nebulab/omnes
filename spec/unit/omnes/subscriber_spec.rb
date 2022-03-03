@@ -216,37 +216,60 @@ RSpec.describe Omnes::Subscriber do
       expect(bus.subscriptions.count).to be(0)
     end
 
-    it "raises FrozenSubscriber error when calling multiple times" do
+    it "can subscriber multiple instances to the same bus" do
       bus.register(:foo)
       subscriber_class.class_eval do
+        attr_reader :value
+
         handle :foo, with: :foo
 
-        def foo; end
+        def initialize(value)
+          @value = value
+        end
+
+        def foo(_event)
+          value
+        end
       end
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber_class.new(1).subscribe_to(bus)
+      subscriber_class.new(2).subscribe_to(bus)
 
-      expect {
-        subscriber_class.new.subscribe_to(bus)
-      }.to raise_error(described_class::FrozenSubscriberError)
+      expect(bus.publish(:foo).executions.map(&:result)).to match_array([1, 2])
     end
 
-    it "can't add more subscriptions once it's been called" do
-      bus.register(:foo)
-      bus.register(:bar)
+    it "can subscriber the same instance to different buses" do
+      bus_one = Omnes::Bus.new
+      bus_two = Omnes::Bus.new
+      [bus_one, bus_two].each { |bus| bus.register(:foo) }
       subscriber_class.class_eval do
         handle :foo, with: :foo
 
         def foo; end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriptions_from_one = subscriber.subscribe_to(bus_one)
+      subscriptions_from_two = subscriber.subscribe_to(bus_two)
+
+      expect(subscriptions_from_one.method_names(event_name: :foo)).to eq([:foo])
+      expect(subscriptions_from_two.method_names(event_name: :foo)).to eq([:foo])
+    end
+
+    it "raises FrozenSubscriber error when calling the same instance multiple times for the same bus" do
+      bus.register(:foo)
+      subscriber_class.class_eval do
+        handle :foo, with: :foo
+
+        def foo; end
+      end
+      subscriber = subscriber_class.new
+
+      subscriber.subscribe_to(bus)
 
       expect {
-        subscriber_class.new.subscribe_to(bus)
+        subscriber.subscribe_to(bus)
       }.to raise_error(described_class::FrozenSubscriberError)
-
-      expect(bus.subscriptions.count).to be(1)
     end
   end
 end
