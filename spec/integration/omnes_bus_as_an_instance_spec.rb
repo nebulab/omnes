@@ -23,7 +23,7 @@ RSpec.describe "Omnes bus as an instance" do
       collaborator.called = true
     end
 
-    instance.call
+    instance.()
 
     expect(collaborator.called).to be(true)
   end

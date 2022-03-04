@@ -19,11 +19,11 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.new.subscribe_to(bus)
 
       subscription = bus.subscriptions[0]
-      expect(subscription.event_name).to be(:foo)
-      expect(subscription.callback.call(:event)).to be(:on_foo)
+      expect(subscription.matches?(:foo)).to be(true)
+      expect(subscription.callback.(:event)).to be(:on_foo)
     end
 
-    it "subscribes with manually specified handlers" do
+    it "subscribes with manually specified single event handlers" do
       bus.register(:foo)
       subscriber_class.class_eval do
         handle :foo, with: :bar
@@ -36,8 +36,43 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.new.subscribe_to(bus)
 
       subscription = bus.subscriptions[0]
-      expect(subscription.event_name).to be(:foo)
-      expect(subscription.callback.call(:event)).to be(:bar)
+      expect(subscription.matches?(:foo)).to be(true)
+      expect(subscription.callback.(:event)).to be(:bar)
+    end
+
+    it "subscribes with manually specified global handlers" do
+      bus.register(:bar)
+      subscriber_class.class_eval do
+        handle_all with: :bar
+
+        def bar(_event)
+          __method__
+        end
+      end
+
+      subscriber_class.new.subscribe_to(bus)
+
+      subscription = bus.subscriptions[0]
+      expect(subscription.matches?(:foo)).to be(true)
+      expect(subscription.callback.(:event)).to be(:bar)
+    end
+
+    it "subscribes with custom strategy" do
+      true_strategy = ->(_candidate) { true }
+      bus.register(:bar)
+      subscriber_class.class_eval do
+        handle_with_strategy true_strategy, with: :bar
+
+        def bar(_event)
+          __method__
+        end
+      end
+
+      subscriber_class.new.subscribe_to(bus)
+
+      subscription = bus.subscriptions[0]
+      expect(subscription.matches?(:foo)).to be(true)
+      expect(subscription.callback.(:event)).to be(:bar)
     end
 
     it "raises when trying to subscribe to an autodiscovered private method" do
@@ -50,7 +85,7 @@ RSpec.describe Omnes::Subscriber do
         subscriber_class.new.subscribe_to(bus)
       }.to raise_error(
         described_class::PrivateMethodSubscriptionAttemptError,
-        /event "foo".*"on_foo" private method/m
+        /"on_foo" private method/m
       )
     end
 
@@ -66,7 +101,7 @@ RSpec.describe Omnes::Subscriber do
         subscriber_class.new.subscribe_to(bus)
       }.to raise_error(
         described_class::PrivateMethodSubscriptionAttemptError,
-        /event "foo".*"bar" private method/m
+        /"bar" private method/m
       )
     end
 
@@ -182,7 +217,7 @@ RSpec.describe Omnes::Subscriber do
         subscriber_class.new.subscribe_to(bus)
       }.to raise_error(
         described_class::UnknownMethodSubscriptionAttemptError,
-        /event "foo".*"bar" method/m
+        /"bar" method/m
       )
     end
 
@@ -202,6 +237,7 @@ RSpec.describe Omnes::Subscriber do
 
     it "doesn't add any subscription if there's an error" do
       bus.register(:foo)
+      bus.register(:bar)
       subscriber_class.class_eval do
         handle :foo, with: :foo
         handle :bar, with: :bar

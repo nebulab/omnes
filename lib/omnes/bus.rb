@@ -83,9 +83,16 @@ module Omnes
       registry.check_event_name(event_name)
       event = Event.new(payload: payload, caller_location: caller_location)
       executions = subscriptions_for_event(event_name).map do |subscription|
-        subscription.call(event)
+        subscription.(event)
       end
       Publication.new(event: event, executions: executions)
+    end
+
+    def subscribe_with_strategy(strategy, callable = nil, &block)
+      callback = callable || block
+      Subscription.new(strategy: strategy, callback: callback).tap do |subscription|
+        @subscriptions << subscription
+      end
     end
 
     # Subscribe a subscription to one or more events
@@ -107,11 +114,12 @@ module Omnes
     #     do_something if event.payload[:foo]
     #   end
     def subscribe(event_name, callable = nil, &block)
-      callback = callable || block
       registry.check_event_name(event_name)
-      Subscription.new(event_name: event_name, callback: callback).tap do |subscription|
-        @subscriptions << subscription
-      end
+      subscribe_with_strategy(Subscription::SINGLE_EVENT_STRATEGY.curry[event_name], callable, &block)
+    end
+
+    def subscribe_to_all(callable = nil, &block)
+      subscribe_with_strategy(Subscription::ALL_EVENTS_STRATEGY, callable, &block)
     end
 
     # Removes a subscription

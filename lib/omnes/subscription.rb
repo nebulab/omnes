@@ -17,12 +17,18 @@ module Omnes
   #   subscription = bus.subscribe(:foo) { do_something }
   #   bus.unsubscribe subscription
   class Subscription
-    # @api private
-    attr_reader :event_name, :callback
+    SINGLE_EVENT_STRATEGY = lambda do |published, candidate|
+      published == candidate
+    end
+
+    ALL_EVENTS_STRATEGY = ->(_candidate) { true }
 
     # @api private
-    def initialize(event_name:, callback:)
-      @event_name = event_name
+    attr_reader :strategy, :callback
+
+    # @api private
+    def initialize(strategy:, callback:)
+      @strategy = strategy
       @callback = callback
     end
 
@@ -30,7 +36,7 @@ module Omnes
     def call(event)
       result = nil
       benchmark = Benchmark.measure do
-        result = @callback.call(event)
+        result = @callback.(event)
       end
 
       Execution.new(subscription: self, result: result, benchmark: benchmark)
@@ -38,7 +44,7 @@ module Omnes
 
     # @api private
     def matches?(candidate)
-      event_name == candidate
+      strategy.(candidate)
     end
 
     # @api private

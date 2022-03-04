@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "omnes/subscription"
 require "omnes/subscriber/state"
 
 module Omnes
@@ -8,7 +9,7 @@ module Omnes
   # You can include this module in a class to use its methods as handlers for an
   # event bus.
   #
-  # There're two ways to specify event handlers.
+  # This is how to specify event handlers.
   #
   # 1. Match an event name with a method name prepended with `:on_`.
   #
@@ -23,7 +24,7 @@ module Omnes
   #     end
   #   end
   #
-  # 2. Use the `handle` class method.
+  # 2. Use the `handle` class method to subscribe a method to a single event.
   #
   # @example
   #   require 'omnes/subscriber'
@@ -38,7 +39,38 @@ module Omnes
   #     end
   #   end
   #
-  # Both ways can be used at the same time.
+  # 3. Use the `handle_all` class method to subscribe a method to all events.
+  #
+  # @example
+  #   require 'omnes/subscriber'
+  #
+  #   class MySubscriber
+  #     include Omnes::Subscriber
+  #
+  #     handle_all with: :my_method
+  #
+  #     def my_method(event)
+  #       # do_something
+  #     end
+  #   end
+  #
+  # 4. Use the `handle_with_strategy` class method to subscribe with a custom
+  # strategy (see {Omnes::Bus#subscribe_with_strategy}
+  #
+  # @example
+  #   require 'omnes/subscriber'
+  #
+  #   class MySubscriber
+  #     include Omnes::Subscriber
+  #
+  #     handle_with_strategy my_strategy, with: :my_method
+  #
+  #     def my_method(event)
+  #       # do_something
+  #     end
+  #   end
+  #
+  # All different ways can be used at the same time.
   #
   # You can call `#subscribe_to` on the instance to activate the subscriptions:
   #
@@ -55,7 +87,9 @@ module Omnes
   # - You can subscribe different methods to the same event.
   # - You can't subscribe the same method to the same event more than once.
   # - You can't subscribe private methods.
-  # - Once you've called `#subscribe_to`, you can't re-subscribe again.
+  # - You can subscribe different instances to the bus
+  # - You can subscribe the same instance to different buses
+  # - You can't subscribe the same instance to the same bus more than once
   module Subscriber
     # @api private
     def self.included(klass)
@@ -82,16 +116,39 @@ module Omnes
 
     # Included DSL
     module ClassMethods
-      # Manual definition of an event handler
+      # Match a single event name to a method
       #
       # @param event_name [Symbol]
       # @param with [Symbol] Public method in the class
-      #
-      # @raise [FrozenError] when an instance of the class has already called
-      # its {#subscribe_to} method.
       def handle(event_name, with:)
         @_mutex.synchronize do
-          @_state.add_manual_definition(event_name, with)
+          @_state.add_subscription_definition do |bus|
+            bus.registry.check_event_name(event_name)
+            [Subscription::SINGLE_EVENT_STRATEGY.curry[event_name], with]
+          end
+        end
+      end
+
+      # Handles all events with a method
+      #
+      # @param with [Symbol] Public method in the class
+      def handle_all(with:)
+        @_mutex.synchronize do
+          @_state.add_subscription_definition do |_bus|
+            [Subscription::ALL_EVENTS_STRATEGY, with]
+          end
+        end
+      end
+
+      # Handles events with a custom strategy using a method
+      #
+      # @param strategy [#call]
+      # @param with [Symbol] Public method in the class
+      def handle_with_strategy(strategy, with:)
+        @_mutex.synchronize do
+          @_state.add_subscription_definition do |_bus|
+            [strategy, with]
+          end
         end
       end
     end

@@ -18,6 +18,9 @@ Style/BlockDelimiters:
 Style/MultilineBlockChain:
   Enabled: false
 
+Style/LambdaCall:
+  EnforcedStyle: braces
+
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 

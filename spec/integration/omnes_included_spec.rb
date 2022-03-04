@@ -24,7 +24,7 @@ RSpec.describe "Omnes included" do
       collaborator.called = true
     end
 
-    instance.call
+    instance.()
 
     expect(collaborator.called).to be(true)
   end

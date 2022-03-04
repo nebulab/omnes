@@ -140,6 +140,65 @@ RSpec.shared_examples "bus" do
     end
   end
 
+  describe "#subscribe_with_strategy" do
+    let(:true_strategy) { ->(_candidate) { true } }
+    let(:false_strategy) { ->(_candidate) { false } }
+
+    it "can subscribe as a block" do
+      bus = subject.new
+      bus.register(:foo)
+
+      bus.subscribe_with_strategy(true_strategy) { :foo }
+
+      subscription = bus.subscriptions.first
+      expect(subscription.callback.()).to be(:foo)
+    end
+
+    it "can subscribe as anything callable" do
+      bus = subject.new
+      bus.register(:foo)
+      callable = proc { :foo }
+
+      bus.subscribe_with_strategy(true_strategy, callable)
+
+      subscription = bus.subscriptions.first
+      expect(subscription.callback.()).to be(:foo)
+    end
+
+    it "callable takes precedence over block" do
+      bus = subject.new
+      bus.register(:foo)
+      callable = proc { :foo }
+
+      bus.subscribe_with_strategy(true_strategy, callable) { :bar }
+
+      subscription = bus.subscriptions.first
+      expect(subscription.callback.()).to be(:foo)
+    end
+
+    it "runs when strategy returns true" do
+      dummy = counter.new
+      bus = subject.new
+      bus.register(:foo)
+
+      bus.subscribe_with_strategy(true_strategy) { dummy.inc }
+      bus.publish(:foo)
+
+      expect(dummy.count).to be(1)
+    end
+
+    it "doesn't run when strategy returns false" do
+      dummy = counter.new
+      bus = subject.new
+      bus.register(:foo)
+
+      bus.subscribe_with_strategy(false_strategy) { dummy.inc }
+      bus.publish(:foo)
+
+      expect(dummy.count).to be(0)
+    end
+  end
+
   describe "#subscribe" do
     it "can subscribe as a block" do
       bus = subject.new
@@ -148,7 +207,7 @@ RSpec.shared_examples "bus" do
       bus.subscribe(:foo) { :foo }
 
       subscription = bus.subscriptions.first
-      expect(subscription.callback.call).to be(:foo)
+      expect(subscription.callback.()).to be(:foo)
     end
 
     it "can subscribe as anything callable" do
@@ -159,7 +218,7 @@ RSpec.shared_examples "bus" do
       bus.subscribe(:foo, callable)
 
       subscription = bus.subscriptions.first
-      expect(subscription.callback.call).to be(:foo)
+      expect(subscription.callback.()).to be(:foo)
     end
 
     it "callable takes precedence over block" do
@@ -170,19 +229,30 @@ RSpec.shared_examples "bus" do
       bus.subscribe(:foo, callable) { :bar }
 
       subscription = bus.subscriptions.first
-      expect(subscription.callback.call).to be(:foo)
+      expect(subscription.callback.()).to be(:foo)
     end
 
-    it "registers to matching event" do
+    it "runs when published event matches" do
+      dummy = counter.new
       bus = subject.new
       bus.register(:foo)
 
-      callback = -> {}
-      bus.subscribe(:foo, &callback)
+      bus.subscribe(:foo) { dummy.inc }
+      bus.publish(:foo)
 
-      subscription = bus.subscriptions.first
-      expect(subscription.event_name).to be(:foo)
-      expect(subscription.callback.object_id).to eq(callback.object_id)
+      expect(dummy.count).to be(1)
+    end
+
+    it "doesn't run when published event doesn't match" do
+      dummy = counter.new
+      bus = subject.new
+      bus.register(:foo)
+      bus.register(:bar)
+
+      bus.subscribe(:foo) { dummy.inc }
+      bus.publish(:bar)
+
+      expect(dummy.count).to be(0)
     end
 
     it "raises when given event name hasn't been registered" do
@@ -191,6 +261,51 @@ RSpec.shared_examples "bus" do
       expect {
         bus.subscribe(:foo)
       }.to raise_error(Omnes::UnknownEventError, /not registered/)
+    end
+  end
+
+  describe "#subscribe_to_all" do
+    it "can subscribe as a block" do
+      bus = subject.new
+      bus.register(:foo)
+
+      bus.subscribe_to_all { :foo }
+
+      subscription = bus.subscriptions.first
+      expect(subscription.callback.()).to be(:foo)
+    end
+
+    it "can subscribe as anything callable" do
+      bus = subject.new
+      bus.register(:foo)
+      callable = proc { :foo }
+
+      bus.subscribe_to_all(callable)
+
+      subscription = bus.subscriptions.first
+      expect(subscription.callback.()).to be(:foo)
+    end
+
+    it "callable takes precedence over block" do
+      bus = subject.new
+      bus.register(:foo)
+      callable = proc { :foo }
+
+      bus.subscribe_to_all(callable) { :bar }
+
+      subscription = bus.subscriptions.first
+      expect(subscription.callback.()).to be(:foo)
+    end
+
+    it "runs for every event" do
+      dummy = counter.new
+      bus = subject.new
+      bus.register(:foo)
+
+      bus.subscribe_to_all { dummy.inc }
+      bus.publish(:foo)
+
+      expect(dummy.count).to be(1)
     end
   end
 
