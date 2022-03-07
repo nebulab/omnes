@@ -81,7 +81,7 @@ module Omnes
     #   bus.publish(:foo, bar: true)
     def publish(event_name, caller_location: caller_locations(1)[0], **payload)
       registry.check_event_name(event_name)
-      event = Event.new(payload: payload, caller_location: caller_location)
+      event = Event.new(name: event_name, payload: payload, caller_location: caller_location)
       executions = subscriptions_for_event(event_name).map do |subscription|
         subscription.(event)
       end

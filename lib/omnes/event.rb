@@ -19,6 +19,11 @@ module Omnes
   # It can be useful for debugging and logging purposes, as it contains
   # helpful metadata like the event time or the caller location.
   class Event
+    # Name of the event
+    #
+    # @return [Symbol]
+    attr_reader :name
+
     # Hash with the options given to {Omnes::Bus#publish}
     #
     # @return [Hash]
@@ -38,10 +43,11 @@ module Omnes
     attr_reader :caller_location
 
     # @api private
-    def initialize(payload:, caller_location:, publication_time: Time.now.utc)
+    def initialize(payload:, caller_location:, name:, publication_time: Time.now.utc)
       @payload = payload
       @caller_location = caller_location
       @publication_time = publication_time
+      @name = name
     end
 
     # Delegates to {#payload}
