@@ -38,6 +38,8 @@ module Omnes
   #     end
   #   end
   #
+  # Set `autodiscover_strategy` to `nil` to disable that feature altogether.
+  #
   # 2. Use the `handle` class method to subscribe a method to a single event.
   #
   # @example

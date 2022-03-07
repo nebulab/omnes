@@ -40,6 +40,21 @@ RSpec.describe Omnes::Subscriber do
       expect(subscription.callback.(:event)).to be(:left_foo_right)
     end
 
+    it "can switch off autodiscovery" do
+      bus.register(:foo)
+      subscriber_class = Class.new do
+        include Omnes::Subscriber[autodiscover_strategy: nil]
+
+        def on_foo(_event)
+          __method__
+        end
+      end
+
+      subscriber_class.new.subscribe_to(bus)
+
+      expect(bus.subscriptions.empty?).to be(true)
+    end
+
     it "subscribes with manually specified single event handlers" do
       bus.register(:foo)
       subscriber_class.class_eval do

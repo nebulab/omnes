@@ -19,7 +19,7 @@ module Omnes
       def call(bus, instance)
         raise MultipleSubscriberSubscriptionAttemptError if already_called?(bus, instance)
 
-        autodiscover_subscription_definitions(bus, instance)
+        autodiscover_subscription_definitions(bus, instance) unless autodiscover_strategy.nil?
 
         definitions = subscription_definitions.map { |defn| defn.(bus) }
         check_definitions(definitions, bus, instance)
