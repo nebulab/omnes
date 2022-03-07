@@ -292,7 +292,7 @@ RSpec.describe Omnes::Subscriber do
       expect(subscriptions_from_two.method_names(event_name: :foo)).to eq([:foo])
     end
 
-    it "raises FrozenSubscriber error when calling the same instance multiple times for the same bus" do
+    it "raises when calling the same instance multiple times for the same bus" do
       bus.register(:foo)
       subscriber_class.class_eval do
         handle :foo, with: :foo
@@ -305,7 +305,7 @@ RSpec.describe Omnes::Subscriber do
 
       expect {
         subscriber.subscribe_to(bus)
-      }.to raise_error(described_class::FrozenSubscriberError)
+      }.to raise_error(described_class::MultipleSubscriberSubscriptionAttemptError)
     end
   end
 end

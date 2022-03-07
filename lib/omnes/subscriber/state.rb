@@ -16,7 +16,7 @@ module Omnes
       end
 
       def call(bus, instance)
-        raise FrozenSubscriberError if already_called?(bus, instance)
+        raise MultipleSubscriberSubscriptionAttemptError if already_called?(bus, instance)
 
         autodiscover_subscription_definitions(bus, instance)
 

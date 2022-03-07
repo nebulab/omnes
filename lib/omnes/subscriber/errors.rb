@@ -65,8 +65,9 @@ module Omnes
       end
     end
 
-    # Raised when calling {Omnes::Subscriber#subscribe_to} multiple times
-    class FrozenSubscriberError < Omnes::Error
+    # Raised when calling {Omnes::Subscriber#subscribe_to} multiple times for
+    # the same instance/bus
+    class MultipleSubscriberSubscriptionAttemptError < Omnes::Error
       # @api private
       def initialize
         super(default_message)
@@ -76,7 +77,8 @@ module Omnes
 
       def default_message
         <<~MSG
-          Omnes::Subscriber#subscribe_to method can only be called once.
+          Omnes::Subscriber#subscribe_to method can only be called once for a
+          given instance on a given bus
         MSG
       end
     end
