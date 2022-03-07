@@ -24,6 +24,20 @@ module Omnes
   #     end
   #   end
   #
+  # You can use your custom autodiscover strategy:
+  #
+  # @example
+  #   class MySubscriber
+  #     include Omnes::Subscriber[
+  #       autodiscover_strategy: ->(event_name) { event_name }
+  #     ]
+  #
+  #     # It'll match foo event
+  #     def foo(event)
+  #       # do_something
+  #     end
+  #   end
+  #
   # 2. Use the `handle` class method to subscribe a method to a single event.
   #
   # @example
@@ -92,26 +106,57 @@ module Omnes
   # - You can't subscribe the same instance to the same bus more than once
   module Subscriber
     # @api private
-    def self.included(klass)
-      klass.instance_variable_set(:@_mutex, Mutex.new)
-      klass.instance_variable_set(:@_state, State.new)
-      klass.extend(ClassMethods)
+    ON_PREFIX_STRATEGY = ->(event_name) { :"on_#{event_name}" }
+
+    # Includes with options
+    #
+    # Use regular `include Omnes::Subscriber` in case you want to use defaults:
+    #
+    # @example
+    #   include Omnes::Subscriber[autodiscover_strategy: my_strategy]
+    def self.[](autodiscover_strategy: ON_PREFIX_STRATEGY)
+      Module.new(autodiscover_strategy: autodiscover_strategy)
     end
 
-    # Subscribes defined & autodiscovered handlers to a bus
-    #
-    # @param bus [Omnes::Bus]
-    #
-    # @return [Omnes::Subscriber::Subscribers]
-    #
-    # @raise [Omnes::Subscriber::UnknownMethodSubscriptionAttemptError] when
-    # subscribing a method that doesn't exist
-    # @raise [Omnes::Subscriber::PrivateMethodSubscriptionAttemptError] when
-    # trying to subscribe a method that is private
-    # @raise [Omnes::Subscriber::DuplicateSubscriptionAttemptError] when
-    # trying to subscribe to the same event with the same method more than once
-    def subscribe_to(bus)
-      self.class.instance_variable_get(:@_state).public_send(:call, bus, self)
+    # @api private
+    def self.included(klass)
+      klass.include(self.[])
+    end
+
+    # @api private
+    class Module < ::Module
+      attr_reader :autodiscover_strategy
+
+      def initialize(autodiscover_strategy:)
+        @autodiscover_strategy = autodiscover_strategy
+        super()
+      end
+
+      def included(klass)
+        klass.instance_variable_set(:@_mutex, Mutex.new)
+        klass.instance_variable_set(:@_state, State.new(autodiscover_strategy: autodiscover_strategy))
+        klass.extend(ClassMethods)
+        klass.include(InstanceMethods)
+      end
+    end
+
+    # Included instance methods
+    module InstanceMethods
+      # Subscribes defined & autodiscovered handlers to a bus
+      #
+      # @param bus [Omnes::Bus]
+      #
+      # @return [Omnes::Subscriber::Subscribers]
+      #
+      # @raise [Omnes::Subscriber::UnknownMethodSubscriptionAttemptError] when
+      # subscribing a method that doesn't exist
+      # @raise [Omnes::Subscriber::PrivateMethodSubscriptionAttemptError] when
+      # trying to subscribe a method that is private
+      # @raise [Omnes::Subscriber::DuplicateSubscriptionAttemptError] when
+      # trying to subscribe to the same event with the same method more than once
+      def subscribe_to(bus)
+        self.class.instance_variable_get(:@_state).public_send(:call, bus, self)
+      end
     end
 
     # Included DSL

@@ -8,11 +8,12 @@ module Omnes
   module Subscriber
     # @api private
     class State
-      attr_reader :subscription_definitions, :calling_cache
+      attr_reader :subscription_definitions, :calling_cache, :autodiscover_strategy
 
-      def initialize(subscription_definitions: [], calling_cache: [])
+      def initialize(autodiscover_strategy:, subscription_definitions: [], calling_cache: [])
         @subscription_definitions = subscription_definitions
         @calling_cache = calling_cache
+        @autodiscover_strategy = autodiscover_strategy
       end
 
       def call(bus, instance)
@@ -45,7 +46,7 @@ module Omnes
 
       def autodiscover_subscription_definitions(bus, instance)
         bus.registry.event_names.each do |event_name|
-          method_name = :"on_#{event_name}"
+          method_name = autodiscover_strategy.(event_name)
           next unless instance.respond_to?(method_name, true)
 
           add_subscription_definition do |_bus|

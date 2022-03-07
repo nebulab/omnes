@@ -23,6 +23,23 @@ RSpec.describe Omnes::Subscriber do
       expect(subscription.callback.(:event)).to be(:on_foo)
     end
 
+    it "can use custom strategy to autodiscover" do
+      bus.register(:foo)
+      subscriber_class = Class.new do
+        include Omnes::Subscriber[autodiscover_strategy: ->(event_name) { :"left_#{event_name}_right" }]
+
+        def left_foo_right(_event)
+          __method__
+        end
+      end
+
+      subscriber_class.new.subscribe_to(bus)
+
+      subscription = bus.subscriptions[0]
+      expect(subscription.matches?(:foo)).to be(true)
+      expect(subscription.callback.(:event)).to be(:left_foo_right)
+    end
+
     it "subscribes with manually specified single event handlers" do
       bus.register(:foo)
       subscriber_class.class_eval do
