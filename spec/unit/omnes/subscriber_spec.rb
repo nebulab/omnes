@@ -107,6 +107,29 @@ RSpec.describe Omnes::Subscriber do
       expect(subscription.callback.(:event)).to be(:bar)
     end
 
+    it "can specify custom callback builder" do
+      bus.register(:foo)
+      subscriber_class.class_eval do
+        handle :foo, with: lambda { |instance|
+          ->(event) { instance.class.perform_in(5, event) }
+        }
+
+        def self.perform_in(_time, event)
+          "5 #{new.perform(event)}"
+        end
+
+        def perform(event)
+          event
+        end
+      end
+
+      subscriber_class.new.subscribe_to(bus)
+
+      subscription = bus.subscriptions[0]
+      expect(subscription.matches?(:foo)).to be(true)
+      expect(subscription.callback.(:event)).to eq("5 event")
+    end
+
     it "raises when trying to subscribe to an autodiscovered private method" do
       bus.register(:foo)
       subscriber_class.class_eval do
@@ -116,7 +139,7 @@ RSpec.describe Omnes::Subscriber do
       expect {
         subscriber_class.new.subscribe_to(bus)
       }.to raise_error(
-        described_class::PrivateMethodSubscriptionAttemptError,
+        described_class::CallbackBuilder::Method::PrivateMethodSubscriptionAttemptError,
         /"on_foo" private method/m
       )
     end
@@ -132,110 +155,8 @@ RSpec.describe Omnes::Subscriber do
       expect {
         subscriber_class.new.subscribe_to(bus)
       }.to raise_error(
-        described_class::PrivateMethodSubscriptionAttemptError,
+        described_class::CallbackBuilder::Method::PrivateMethodSubscriptionAttemptError,
         /"bar" private method/m
-      )
-    end
-
-    it "returns a Subscriptions instance" do
-      bus.register(:foo)
-      subscriber_class.class_eval do
-        def on_foo; end
-      end
-
-      subscriptions = subscriber_class.new.subscribe_to(bus)
-
-      expect(subscriptions).to be_a(described_class::Subscriptions)
-    end
-
-    it "can subscribe different methods to the same event with manual definition" do
-      bus.register(:foo)
-      subscriber_class.class_eval do
-        handle :foo, with: :foo
-        handle :foo, with: :bar
-
-        def foo; end
-        def bar; end
-      end
-
-      subscriptions = subscriber_class.new.subscribe_to(bus)
-
-      expect(subscriptions.method_names(event_name: :foo)).to match_array(%i[foo bar])
-    end
-
-    it "can subscribe different methods to the same event mixing autodescovering and manual definition" do
-      bus.register(:foo)
-      subscriber_class.class_eval do
-        handle :foo, with: :bar
-
-        def on_foo; end
-        def bar; end
-      end
-
-      subscriptions = subscriber_class.new.subscribe_to(bus)
-
-      expect(subscriptions.method_names(event_name: :foo)).to match_array(%i[on_foo bar])
-    end
-
-    it "can subscribe the same method to different events with manual definition" do
-      bus.register(:foo)
-      bus.register(:bar)
-      subscriber_class.class_eval do
-        handle :foo, with: :foobar
-        handle :bar, with: :foobar
-
-        def foobar; end
-      end
-
-      subscriptions = subscriber_class.new.subscribe_to(bus)
-
-      expect(subscriptions.event_names(method_name: :foobar)).to match_array(%i[foo bar])
-    end
-
-    it "can subscribe the same method to different events mixing autodescovering and manual definition" do
-      bus.register(:foo)
-      bus.register(:bar)
-      subscriber_class.class_eval do
-        handle :bar, with: :on_foo
-
-        def on_foo; end
-      end
-
-      subscriptions = subscriber_class.new.subscribe_to(bus)
-
-      expect(subscriptions.event_names(method_name: :on_foo)).to match_array(%i[foo bar])
-    end
-
-    it "raises when trying to subscribe the same method twice to the same event with manual definition" do
-      bus.register(:foo)
-      subscriber_class.class_eval do
-        handle :foo, with: :foo
-        handle :foo, with: :foo
-
-        def foo; end
-      end
-
-      expect {
-        subscriber_class.new.subscribe_to(bus)
-      }.to raise_error(
-        described_class::DuplicateSubscriptionAttemptError,
-        %r{foo / foo}m
-      )
-    end
-
-    it "raises when trying to subscribe the same method twice to the same event mixing autodescovering and manual" do
-      bus.register(:foo)
-      subscriber_class.class_eval do
-        handle :foo, with: :on_foo
-
-        def on_foo; end
-      end
-
-      expect {
-        subscriber_class.new.subscribe_to(bus)
-      }.to raise_error(
-        described_class::DuplicateSubscriptionAttemptError,
-        %r{foo / on_foo}m
       )
     end
 
@@ -248,7 +169,7 @@ RSpec.describe Omnes::Subscriber do
       expect {
         subscriber_class.new.subscribe_to(bus)
       }.to raise_error(
-        described_class::UnknownMethodSubscriptionAttemptError,
+        described_class::CallbackBuilder::Method::UnknownMethodSubscriptionAttemptError,
         /"bar" method/m
       )
     end
@@ -279,7 +200,7 @@ RSpec.describe Omnes::Subscriber do
 
       expect {
         subscriber_class.new.subscribe_to(bus)
-      }.to raise_error(described_class::UnknownMethodSubscriptionAttemptError)
+      }.to raise_error(described_class::CallbackBuilder::Method::UnknownMethodSubscriptionAttemptError)
 
       expect(bus.subscriptions.count).to be(0)
     end
@@ -317,11 +238,11 @@ RSpec.describe Omnes::Subscriber do
       end
       subscriber = subscriber_class.new
 
-      subscriptions_from_one = subscriber.subscribe_to(bus_one)
-      subscriptions_from_two = subscriber.subscribe_to(bus_two)
+      subscriber.subscribe_to(bus_one)
+      subscriber.subscribe_to(bus_two)
 
-      expect(subscriptions_from_one.method_names(event_name: :foo)).to eq([:foo])
-      expect(subscriptions_from_two.method_names(event_name: :foo)).to eq([:foo])
+      expect(bus_one.subscriptions.count).to be(1)
+      expect(bus_two.subscriptions.count).to be(1)
     end
 
     it "raises when calling the same instance multiple times for the same bus" do

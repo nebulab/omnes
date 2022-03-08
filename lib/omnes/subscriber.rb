@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "omnes/subscription"
+require "omnes/subscriber/callback_builder"
 require "omnes/subscriber/state"
 
 module Omnes
@@ -80,6 +81,25 @@ module Omnes
   #     include Omnes::Subscriber
   #
   #     handle_with_strategy my_strategy, with: :my_method
+  #
+  #     def my_method(event)
+  #       # do_something
+  #     end
+  #   end
+  #
+  # 5. Use whatever callback builder you want instead in the `with` parameter
+  #
+  # @example
+  #   require 'omnes/subscriber'
+  #
+  #   class MySubscriber
+  #     include Omnes::Subscriber
+  #
+  #     handle :foo, with: lambda do |instance|
+  #       instance.do_something
+  #
+  #       instance.method(:my_method)
+  #     end
   #
   #     def my_method(event)
   #       # do_something
@@ -171,7 +191,7 @@ module Omnes
         @_mutex.synchronize do
           @_state.add_subscription_definition do |bus|
             bus.registry.check_event_name(event_name)
-            [Subscription::SINGLE_EVENT_STRATEGY.curry[event_name], with]
+            [Subscription::SINGLE_EVENT_STRATEGY.curry[event_name], CallbackBuilder.Type(with)]
           end
         end
       end
@@ -182,7 +202,7 @@ module Omnes
       def handle_all(with:)
         @_mutex.synchronize do
           @_state.add_subscription_definition do |_bus|
-            [Subscription::ALL_EVENTS_STRATEGY, with]
+            [Subscription::ALL_EVENTS_STRATEGY, CallbackBuilder.Type(with)]
           end
         end
       end
@@ -194,7 +214,7 @@ module Omnes
       def handle_with_strategy(strategy, with:)
         @_mutex.synchronize do
           @_state.add_subscription_definition do |_bus|
-            [strategy, with]
+            [strategy, CallbackBuilder.Type(with)]
           end
         end
       end

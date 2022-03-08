@@ -26,3 +26,7 @@ Style/StringLiterals:
 
 Layout/LineLength:
   Max: 120
+
+Naming/MethodName:
+  IgnoredPatterns:
+    - '.*Type'

@@ -101,7 +101,8 @@ module Omnes
     # event is published.
     #
     # @param event_name [Symbol] The name of the event
-    # @param callable [#call] Code to execute when a matching is triggered
+    # @param callable [#call] Code to execute when a matching is triggered. It
+    # takes the published event.
     # @yield Alternative way to provide the code to execute
     #
     # @return [Omnes::Bus#Subscription] A subscription object that can be used as
