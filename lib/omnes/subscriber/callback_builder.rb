@@ -12,12 +12,18 @@ module Omnes
     # argument for details.
     module CallbackBuilder
       # @api private
+      # TODO: Simplify when currying the builder by just taking the `#call`
+      # method regardless of the value being a callable object or a proc. Waiting
+      # for https://bugs.ruby-lang.org/issues/18620
+      #   > builder.method(:call).curry[instance]
       def self.Type(value)
         case value
         when Symbol
-          Method.new(value)
-        else
+          Type(Method.new(value))
+        when Proc
           value
+        else
+          value.method(:call)
         end
       end
     end

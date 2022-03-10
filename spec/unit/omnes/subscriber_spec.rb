@@ -101,7 +101,7 @@ RSpec.describe Omnes::Subscriber do
     it "builds the callback from given lambda" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        handle :foo, with: ->(instance) { ->(event) { instance.method(:bar).(event) } }
+        handle :foo, with: ->(instance, event) { instance.method(:bar).(event) }
 
         def bar(event)
           event
@@ -162,7 +162,7 @@ RSpec.describe Omnes::Subscriber do
     it "builds the callback from given lambda" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        handle_all with: ->(instance) { ->(event) { instance.method(:bar).(event) } }
+        handle_all with: ->(instance, event) { instance.method(:bar).(event) }
 
         def bar(event)
           event
@@ -213,7 +213,7 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.class_eval do
         TRUE_MATCHER = ->(_candidate) { true }
 
-        handle_with_matcher TRUE_MATCHER, with: ->(instance) { ->(event) { instance.method(:bar).(event) } }
+        handle_with_matcher TRUE_MATCHER, with: ->(instance, event) { instance.method(:bar).(event) }
 
         def bar(event)
           event
@@ -298,6 +298,36 @@ RSpec.describe Omnes::Subscriber do
       expect {
         subscriber.subscribe_to(bus)
       }.to raise_error(described_class::MultipleSubscriberSubscriptionAttemptError)
+    end
+
+    it "accepts the callback builder as a two args callable" do
+      bus.register(:foo)
+      subscriber_class.class_eval do
+        handle :foo, with: ->(instance, event) { instance.method(:bar).(event) }
+
+        def bar(event)
+          event
+        end
+      end
+
+      subscriber_class.new.subscribe_to(bus)
+
+      expect(bus.subscriptions[0].callback.(:foo)).to be(:foo)
+    end
+
+    it "accepts the callback builder as a one arg callable" do
+      bus.register(:foo)
+      subscriber_class.class_eval do
+        handle :foo, with: ->(instance) { ->(event) { instance.method(:bar).(event) } }
+
+        def bar(event)
+          event
+        end
+      end
+
+      subscriber_class.new.subscribe_to(bus)
+
+      expect(bus.subscriptions[0].callback.(:foo)).to be(:foo)
     end
   end
 end
