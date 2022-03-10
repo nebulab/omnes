@@ -175,13 +175,13 @@ RSpec.describe Omnes::Subscriber do
     end
   end
 
-  describe ".handle_with_strategy" do
-    it "subscribes to events matching with given strategy" do
+  describe ".handle_with_matcher" do
+    it "subscribes to events matching with given matcher" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        TRUE_STRATEGY = ->(_candidate) { true }
+        TRUE_MATCHER = ->(_candidate) { true }
 
-        handle_with_strategy TRUE_STRATEGY, with: :foo
+        handle_with_matcher TRUE_MATCHER, with: :foo
 
         def foo; end
       end
@@ -194,9 +194,9 @@ RSpec.describe Omnes::Subscriber do
     it "builds the callback from a matching method when given a symbol" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        TRUE_STRATEGY = ->(_candidate) { true }
+        TRUE_MATCHER = ->(_candidate) { true }
 
-        handle_with_strategy TRUE_STRATEGY, with: :foo
+        handle_with_matcher TRUE_MATCHER, with: :foo
 
         def foo(event)
           event
@@ -211,9 +211,9 @@ RSpec.describe Omnes::Subscriber do
     it "builds the callback from given lambda" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        TRUE_STRATEGY = ->(_candidate) { true }
+        TRUE_MATCHER = ->(_candidate) { true }
 
-        handle_with_strategy TRUE_STRATEGY, with: ->(instance) { ->(event) { instance.method(:bar).(event) } }
+        handle_with_matcher TRUE_MATCHER, with: ->(instance) { ->(event) { instance.method(:bar).(event) } }
 
         def bar(event)
           event

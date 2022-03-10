@@ -71,8 +71,8 @@ module Omnes
   #     end
   #   end
   #
-  # 4. Use the `handle_with_strategy` class method to subscribe with a custom
-  # strategy (see {Omnes::Bus#subscribe_with_strategy}
+  # 4. Use the `handle_with_matcher` class method to subscribe with a custom
+  # matcher (see {Omnes::Bus#subscribe_with_matcher}
   #
   # @example
   #   require 'omnes/subscriber'
@@ -80,7 +80,7 @@ module Omnes
   #   class MySubscriber
   #     include Omnes::Subscriber
   #
-  #     handle_with_strategy my_strategy, with: :my_method
+  #     handle_with_matcher my_matcher, with: :my_method
   #
   #     def my_method(event)
   #       # do_something
@@ -191,7 +191,7 @@ module Omnes
         @_mutex.synchronize do
           @_state.add_subscription_definition do |bus|
             bus.registry.check_event_name(event_name)
-            [Subscription::SINGLE_EVENT_STRATEGY.curry[event_name], CallbackBuilder.Type(with)]
+            [Subscription::SINGLE_EVENT_MATCHER.curry[event_name], CallbackBuilder.Type(with)]
           end
         end
       end
@@ -202,19 +202,19 @@ module Omnes
       def handle_all(with:)
         @_mutex.synchronize do
           @_state.add_subscription_definition do |_bus|
-            [Subscription::ALL_EVENTS_STRATEGY, CallbackBuilder.Type(with)]
+            [Subscription::ALL_EVENTS_MATCHER, CallbackBuilder.Type(with)]
           end
         end
       end
 
-      # Handles events with a custom strategy using a method
+      # Handles events with a custom matcher using a method
       #
-      # @param strategy [#call]
+      # @param matcher [#call]
       # @param with [Symbol] Public method in the class
-      def handle_with_strategy(strategy, with:)
+      def handle_with_matcher(matcher, with:)
         @_mutex.synchronize do
           @_state.add_subscription_definition do |_bus|
-            [strategy, CallbackBuilder.Type(with)]
+            [matcher, CallbackBuilder.Type(with)]
           end
         end
       end

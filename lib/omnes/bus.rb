@@ -88,9 +88,9 @@ module Omnes
       Publication.new(event: event, executions: executions)
     end
 
-    def subscribe_with_strategy(strategy, callable = nil, &block)
+    def subscribe_with_matcher(matcher, callable = nil, &block)
       callback = callable || block
-      Subscription.new(strategy: strategy, callback: callback).tap do |subscription|
+      Subscription.new(matcher: matcher, callback: callback).tap do |subscription|
         @subscriptions << subscription
       end
     end
@@ -116,11 +116,11 @@ module Omnes
     #   end
     def subscribe(event_name, callable = nil, &block)
       registry.check_event_name(event_name)
-      subscribe_with_strategy(Subscription::SINGLE_EVENT_STRATEGY.curry[event_name], callable, &block)
+      subscribe_with_matcher(Subscription::SINGLE_EVENT_MATCHER.curry[event_name], callable, &block)
     end
 
     def subscribe_to_all(callable = nil, &block)
-      subscribe_with_strategy(Subscription::ALL_EVENTS_STRATEGY, callable, &block)
+      subscribe_with_matcher(Subscription::ALL_EVENTS_MATCHER, callable, &block)
     end
 
     # Removes a subscription

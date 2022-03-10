@@ -17,18 +17,18 @@ module Omnes
   #   subscription = bus.subscribe(:foo) { do_something }
   #   bus.unsubscribe subscription
   class Subscription
-    SINGLE_EVENT_STRATEGY = lambda do |published, candidate|
+    SINGLE_EVENT_MATCHER = lambda do |published, candidate|
       published == candidate
     end
 
-    ALL_EVENTS_STRATEGY = ->(_candidate) { true }
+    ALL_EVENTS_MATCHER = ->(_candidate) { true }
 
     # @api private
-    attr_reader :strategy, :callback
+    attr_reader :matcher, :callback
 
     # @api private
-    def initialize(strategy:, callback:)
-      @strategy = strategy
+    def initialize(matcher:, callback:)
+      @matcher = matcher
       @callback = callback
     end
 
@@ -44,7 +44,7 @@ module Omnes
 
     # @api private
     def matches?(candidate)
-      strategy.(candidate)
+      matcher.(candidate)
     end
 
     # @api private

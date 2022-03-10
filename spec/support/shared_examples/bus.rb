@@ -140,15 +140,15 @@ RSpec.shared_examples "bus" do
     end
   end
 
-  describe "#subscribe_with_strategy" do
-    let(:true_strategy) { ->(_candidate) { true } }
-    let(:false_strategy) { ->(_candidate) { false } }
+  describe "#subscribe_with_matcher" do
+    let(:true_matcher) { ->(_candidate) { true } }
+    let(:false_matcher) { ->(_candidate) { false } }
 
     it "can subscribe as a block" do
       bus = subject.new
       bus.register(:foo)
 
-      bus.subscribe_with_strategy(true_strategy) { :foo }
+      bus.subscribe_with_matcher(true_matcher) { :foo }
 
       subscription = bus.subscriptions.first
       expect(subscription.callback.()).to be(:foo)
@@ -159,7 +159,7 @@ RSpec.shared_examples "bus" do
       bus.register(:foo)
       callable = proc { :foo }
 
-      bus.subscribe_with_strategy(true_strategy, callable)
+      bus.subscribe_with_matcher(true_matcher, callable)
 
       subscription = bus.subscriptions.first
       expect(subscription.callback.()).to be(:foo)
@@ -170,29 +170,29 @@ RSpec.shared_examples "bus" do
       bus.register(:foo)
       callable = proc { :foo }
 
-      bus.subscribe_with_strategy(true_strategy, callable) { :bar }
+      bus.subscribe_with_matcher(true_matcher, callable) { :bar }
 
       subscription = bus.subscriptions.first
       expect(subscription.callback.()).to be(:foo)
     end
 
-    it "runs when strategy returns true" do
+    it "runs when matcher returns true" do
       dummy = counter.new
       bus = subject.new
       bus.register(:foo)
 
-      bus.subscribe_with_strategy(true_strategy) { dummy.inc }
+      bus.subscribe_with_matcher(true_matcher) { dummy.inc }
       bus.publish(:foo)
 
       expect(dummy.count).to be(1)
     end
 
-    it "doesn't run when strategy returns false" do
+    it "doesn't run when matcher returns false" do
       dummy = counter.new
       bus = subject.new
       bus.register(:foo)
 
-      bus.subscribe_with_strategy(false_strategy) { dummy.inc }
+      bus.subscribe_with_matcher(false_matcher) { dummy.inc }
       bus.publish(:foo)
 
       expect(dummy.count).to be(0)

@@ -48,17 +48,17 @@ module Omnes
           next unless instance.respond_to?(method_name, true)
 
           add_subscription_definition do |_bus|
-            [Subscription::SINGLE_EVENT_STRATEGY.curry[event_name], CallbackBuilder::Method.new(method_name)]
+            [Subscription::SINGLE_EVENT_MATCHER.curry[event_name], CallbackBuilder::Method.new(method_name)]
           end
         end
       end
 
       def subscribe_definitions(definitions, bus, instance)
-        strategy_with_callbacks = definitions.map do |(strategy, builder)|
-          [strategy, builder.(instance)]
+        matcher_with_callbacks = definitions.map do |(matcher, builder)|
+          [matcher, builder.(instance)]
         end
 
-        strategy_with_callbacks.map { |strategy, callback| bus.subscribe_with_strategy(strategy, callback) }
+        matcher_with_callbacks.map { |matcher, callback| bus.subscribe_with_matcher(matcher, callback) }
       end
     end
   end
