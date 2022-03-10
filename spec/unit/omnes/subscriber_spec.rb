@@ -7,23 +7,23 @@ RSpec.describe Omnes::Subscriber do
   let(:subscriber_class) { Class.new.include(described_class) }
   let(:bus) { Omnes::Bus.new }
 
-  describe "#subscribe_to" do
-    it "autodiscovers and subscribes methods matching registered events" do
-      bus.register(:foo)
-      subscriber_class.class_eval do
-        def on_foo(_event)
-          __method__
-        end
+  it "autodiscovers and subscribes methods matching registered events" do
+    bus.register(:foo)
+    subscriber_class.class_eval do
+      def on_foo(_event)
+        __method__
       end
-
-      subscriber_class.new.subscribe_to(bus)
-
-      subscription = bus.subscriptions[0]
-      expect(subscription.matches?(:foo)).to be(true)
-      expect(subscription.callback.(:event)).to be(:on_foo)
     end
 
-    it "can use custom strategy to autodiscover" do
+    subscriber_class.new.subscribe_to(bus)
+
+    subscription = bus.subscriptions[0]
+    expect(subscription.matches?(:foo)).to be(true)
+    expect(subscription.callback.(:event)).to be(:on_foo)
+  end
+
+  describe ".[]" do
+    it "can specify custom strategy to autodiscover" do
       bus.register(:foo)
       subscriber_class = Class.new do
         include Omnes::Subscriber[autodiscover_strategy: ->(event_name) { :"left_#{event_name}_right" }]
@@ -54,124 +54,63 @@ RSpec.describe Omnes::Subscriber do
 
       expect(bus.subscriptions.empty?).to be(true)
     end
+  end
 
-    it "subscribes with manually specified single event handlers" do
+  describe ".handle" do
+    it "subscribes to the event matching given name" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        handle :foo, with: :bar
+        handle :foo, with: :foo
 
-        def bar(_event)
-          __method__
-        end
+        def foo; end
       end
 
       subscriber_class.new.subscribe_to(bus)
 
-      subscription = bus.subscriptions[0]
-      expect(subscription.matches?(:foo)).to be(true)
-      expect(subscription.callback.(:event)).to be(:bar)
+      expect(bus.subscriptions[0].matches?(:foo)).to be(true)
     end
 
-    it "subscribes with manually specified global handlers" do
-      bus.register(:bar)
-      subscriber_class.class_eval do
-        handle_all with: :bar
-
-        def bar(_event)
-          __method__
-        end
-      end
-
-      subscriber_class.new.subscribe_to(bus)
-
-      subscription = bus.subscriptions[0]
-      expect(subscription.matches?(:foo)).to be(true)
-      expect(subscription.callback.(:event)).to be(:bar)
-    end
-
-    it "subscribes with custom strategy" do
-      true_strategy = ->(_candidate) { true }
-      bus.register(:bar)
-      subscriber_class.class_eval do
-        handle_with_strategy true_strategy, with: :bar
-
-        def bar(_event)
-          __method__
-        end
-      end
-
-      subscriber_class.new.subscribe_to(bus)
-
-      subscription = bus.subscriptions[0]
-      expect(subscription.matches?(:foo)).to be(true)
-      expect(subscription.callback.(:event)).to be(:bar)
-    end
-
-    it "can specify custom callback builder" do
+    it "doesn't subscribe to other events" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        handle :foo, with: lambda { |instance|
-          ->(event) { instance.class.perform_in(5, event) }
-        }
+        handle :foo, with: :foo
 
-        def self.perform_in(_time, event)
-          "5 #{new.perform(event)}"
-        end
+        def foo; end
+      end
 
-        def perform(event)
+      subscriber_class.new.subscribe_to(bus)
+
+      expect(bus.subscriptions[0].matches?(:bar)).to be(false)
+    end
+
+    it "builds the callback from a matching method when given a symbol" do
+      bus.register(:foo)
+      subscriber_class.class_eval do
+        handle :foo, with: :foo
+
+        def foo(event)
           event
         end
       end
 
       subscriber_class.new.subscribe_to(bus)
 
-      subscription = bus.subscriptions[0]
-      expect(subscription.matches?(:foo)).to be(true)
-      expect(subscription.callback.(:event)).to eq("5 event")
+      expect(bus.subscriptions[0].callback.(:bar)).to be(:bar)
     end
 
-    it "raises when trying to subscribe to an autodiscovered private method" do
+    it "builds the callback from given lambda" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        private def on_foo; end
+        handle :foo, with: ->(instance) { ->(event) { instance.method(:bar).(event) } }
+
+        def bar(event)
+          event
+        end
       end
 
-      expect {
-        subscriber_class.new.subscribe_to(bus)
-      }.to raise_error(
-        described_class::CallbackBuilder::Method::PrivateMethodSubscriptionAttemptError,
-        /"on_foo" private method/m
-      )
-    end
+      subscriber_class.new.subscribe_to(bus)
 
-    it "raises when trying to subscribe to a private method with manual definition" do
-      bus.register(:foo)
-      subscriber_class.class_eval do
-        handle :foo, with: :bar
-
-        private def bar; end
-      end
-
-      expect {
-        subscriber_class.new.subscribe_to(bus)
-      }.to raise_error(
-        described_class::CallbackBuilder::Method::PrivateMethodSubscriptionAttemptError,
-        /"bar" private method/m
-      )
-    end
-
-    it "raises when trying to subscribe to a method that doesn't exist" do
-      bus.register(:foo)
-      subscriber_class.class_eval do
-        handle :foo, with: :bar
-      end
-
-      expect {
-        subscriber_class.new.subscribe_to(bus)
-      }.to raise_error(
-        described_class::CallbackBuilder::Method::UnknownMethodSubscriptionAttemptError,
-        /"bar" method/m
-      )
+      expect(bus.subscriptions[0].callback.(:foobar)).to be(:foobar)
     end
 
     it "raises when trying to subscribe to an unregistered event" do
@@ -187,24 +126,107 @@ RSpec.describe Omnes::Subscriber do
         Omnes::UnknownEventError
       )
     end
+  end
 
-    it "doesn't add any subscription if there's an error" do
+  describe ".handle_all" do
+    it "subscribes to all events" do
       bus.register(:foo)
-      bus.register(:bar)
       subscriber_class.class_eval do
-        handle :foo, with: :foo
-        handle :bar, with: :bar
+        handle_all with: :foo
 
         def foo; end
       end
 
-      expect {
-        subscriber_class.new.subscribe_to(bus)
-      }.to raise_error(described_class::CallbackBuilder::Method::UnknownMethodSubscriptionAttemptError)
+      subscriber_class.new.subscribe_to(bus)
 
-      expect(bus.subscriptions.count).to be(0)
+      subscription = bus.subscriptions[0]
+      expect(subscription.matches?(:foo)).to be(true)
+      expect(subscription.matches?(:bar)).to be(true)
     end
 
+    it "builds the callback from a matching method when given a symbol" do
+      bus.register(:foo)
+      subscriber_class.class_eval do
+        handle_all with: :foo
+
+        def foo(event)
+          event
+        end
+      end
+
+      subscriber_class.new.subscribe_to(bus)
+
+      expect(bus.subscriptions[0].callback.(:bar)).to be(:bar)
+    end
+
+    it "builds the callback from given lambda" do
+      bus.register(:foo)
+      subscriber_class.class_eval do
+        handle_all with: ->(instance) { ->(event) { instance.method(:bar).(event) } }
+
+        def bar(event)
+          event
+        end
+      end
+
+      subscriber_class.new.subscribe_to(bus)
+
+      expect(bus.subscriptions[0].callback.(:foobar)).to be(:foobar)
+    end
+  end
+
+  describe ".handle_with_strategy" do
+    it "subscribes to events matching with given strategy" do
+      bus.register(:foo)
+      subscriber_class.class_eval do
+        TRUE_STRATEGY = ->(_candidate) { true }
+
+        handle_with_strategy TRUE_STRATEGY, with: :foo
+
+        def foo; end
+      end
+
+      subscriber_class.new.subscribe_to(bus)
+
+      expect(bus.subscriptions[0].matches?(:foo)).to be(true)
+    end
+
+    it "builds the callback from a matching method when given a symbol" do
+      bus.register(:foo)
+      subscriber_class.class_eval do
+        TRUE_STRATEGY = ->(_candidate) { true }
+
+        handle_with_strategy TRUE_STRATEGY, with: :foo
+
+        def foo(event)
+          event
+        end
+      end
+
+      subscriber_class.new.subscribe_to(bus)
+
+      expect(bus.subscriptions[0].callback.(:bar)).to be(:bar)
+    end
+
+    it "builds the callback from given lambda" do
+      bus.register(:foo)
+      subscriber_class.class_eval do
+        TRUE_STRATEGY = ->(_candidate) { true }
+
+        handle_with_strategy TRUE_STRATEGY, with: ->(instance) { ->(event) { instance.method(:bar).(event) } }
+
+        def bar(event)
+          event
+        end
+      end
+
+      subscriber_class.new.subscribe_to(bus)
+
+      expect(bus.subscriptions[0].callback.(:foobar)).to be(:foobar)
+    end
+  end
+
+  describe "#subscribe_to" do
     it "can subscriber multiple instances to the same bus" do
       bus.register(:foo)
       subscriber_class.class_eval do
@@ -243,6 +265,23 @@ RSpec.describe Omnes::Subscriber do
 
       expect(bus_one.subscriptions.count).to be(1)
       expect(bus_two.subscriptions.count).to be(1)
+    end
+
+    it "doesn't add any subscription if there's an error" do
+      bus.register(:foo)
+      bus.register(:bar)
+      subscriber_class.class_eval do
+        handle :foo, with: :foo
+        handle :bar, with: :bar
+
+        def foo; end
+      end
+
+      expect {
+        subscriber_class.new.subscribe_to(bus)
+      }.to raise_error(described_class::CallbackBuilder::Method::UnknownMethodSubscriptionAttemptError)
+
+      expect(bus.subscriptions.count).to be(0)
     end
 
     it "raises when calling the same instance multiple times for the same bus" do

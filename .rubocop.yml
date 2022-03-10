@@ -30,3 +30,7 @@ Layout/LineLength:
 Naming/MethodName:
   IgnoredPatterns:
     - '.*Type'
+
+Lint/ConstantDefinitionInBlock:
+  Exclude:
+    - 'spec/**/*'
