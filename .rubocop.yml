@@ -34,3 +34,6 @@ Naming/MethodName:
 Lint/ConstantDefinitionInBlock:
   Exclude:
     - 'spec/**/*'
+
+Metrics/MethodLength:
+  Max: 15

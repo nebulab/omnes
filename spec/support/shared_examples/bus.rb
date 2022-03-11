@@ -16,7 +16,7 @@ RSpec.shared_examples "bus" do
   end
 
   describe "#register" do
-    it "adds the event to the register" do
+    it "adds the event name to the register" do
       bus = subject.new
 
       bus.register(:foo)
@@ -24,7 +24,15 @@ RSpec.shared_examples "bus" do
       expect(bus.registry.registered?(:foo)).to be(true)
     end
 
-    it "raises when the event is already in the registry" do
+    it "provides caller location to the registration" do
+      bus = subject.new
+
+      bus.register(:foo)
+
+      expect(bus.registry.registration(:foo).caller_location.to_s).to include(__FILE__)
+    end
+
+    it "raises when the event name is already registered" do
       bus = subject.new
       bus.register(:foo, caller_location: caller_locations(0)[0])
 
@@ -35,7 +43,7 @@ RSpec.shared_examples "bus" do
   end
 
   describe "#publish" do
-    it "executes direct subscriptions for given event name" do
+    it "executes subscriptions matching given event name" do
       bus = subject.new
       dummy = counter.new
       bus.register(:foo)
@@ -46,18 +54,7 @@ RSpec.shared_examples "bus" do
       expect(dummy.count).to be(1)
     end
 
-    it "executes plain subscriptions for given event name" do
-      bus = subject.new
-      dummy = counter.new
-      bus.register(:foo)
-      bus.subscribe(:foo) { dummy.inc }
-
-      bus.publish :foo
-
-      expect(dummy.count).to be(1)
-    end
-
-    it "doesn't execute other event subscriptions" do
+    it "doesn't execute subscriptions that don't match" do
       bus = subject.new
       dummy = counter.new
       bus.register(:bar)
@@ -69,31 +66,7 @@ RSpec.shared_examples "bus" do
       expect(dummy.count).to be(0)
     end
 
-    it "doesn't execute subscriptions partially matching" do
-      bus = subject.new
-      dummy = counter.new
-      bus.register(:bar)
-      bus.subscribe(:bar) { dummy.inc }
-      bus.register(:barr)
-
-      bus.publish :barr
-
-      expect(dummy.count).to be(0)
-    end
-
-    it "doesn't execute subscriptions where the event partially matches" do
-      bus = subject.new
-      dummy = counter.new
-      bus.register(:barr)
-      bus.subscribe(:barr) { dummy.inc }
-      bus.register(:bar)
-
-      bus.publish :bar
-
-      expect(dummy.count).to be(0)
-    end
-
-    it "yields the given options to the subscription as the event payload" do
+    it "can publish an unstructured event yielding given kwargs to the subscription as the event payload" do
       bus = subject.new
       dummy = Class.new do
         attr_accessor :box
@@ -106,14 +79,76 @@ RSpec.shared_examples "bus" do
       expect(dummy.box).to eq("foo")
     end
 
-    it "adds the published event with given caller location to the publication result object" do
+    it "can publish an event instance inheriting from Omnes::Event, yielding it to the subscription" do
+      Event = Class.new(Omnes::Event) do
+        def bar
+          :bar
+        end
+      end
+      dummy = Class.new do
+        attr_accessor :box
+      end.new
+      bus = subject.new
+      bus.register(:event)
+      bus.subscribe(:event) { |event| dummy.box = event.bar }
+
+      bus.publish Event.new
+
+      expect(dummy.box).to eq(:bar)
+    ensure
+      Object.send(:remove_const, :Event)
+    end
+
+    it "can publish an event instance with a name method, yielding it to the subscription" do
+      my_event = Class.new do
+        def name
+          :foo
+        end
+
+        def bar
+          :bar
+        end
+      end
+      dummy = Class.new do
+        attr_accessor :box
+      end.new
+      bus = subject.new
+      bus.register(:foo)
+      bus.subscribe(:foo) { |event| dummy.box = event.bar }
+
+      bus.publish my_event.new
+
+      expect(dummy.box).to eq(:bar)
+    end
+
+    it "adds the caller location to the publication result object" do
       bus = subject.new
       bus.register(:foo)
       bus.subscribe(:foo) { :work }
 
-      publication = bus.publish :foo, caller_location: caller_locations(0)[0]
+      publication = bus.publish :foo
 
-      expect(publication.event.caller_location.to_s).to include(__FILE__)
+      expect(publication.caller_location.to_s).to include(__FILE__)
+    end
+
+    it "adds the publication time to the publication result object" do
+      bus = subject.new
+      bus.register(:foo)
+      bus.subscribe(:foo) { :work }
+
+      publication = bus.publish :foo
+
+      expect(publication.publication_time).not_to be(nil)
+    end
+
+    it "adds the published event to the publication result object" do
+      bus = subject.new
+      bus.register(:foo)
+      bus.subscribe(:foo) { :work }
+
+      publication = bus.publish :foo
+
+      expect(publication.event.is_a?(Omnes::UnstructuredEvent)).to be(true)
     end
 
     it "adds the triggered executions to the publication result object" do

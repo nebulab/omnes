@@ -17,8 +17,8 @@ module Omnes
   #   subscription = bus.subscribe(:foo) { do_something }
   #   bus.unsubscribe subscription
   class Subscription
-    SINGLE_EVENT_MATCHER = lambda do |published, candidate|
-      published == candidate
+    SINGLE_EVENT_MATCHER = lambda do |subscribed, candidate|
+      subscribed == candidate.name
     end
 
     ALL_EVENTS_MATCHER = ->(_candidate) { true }

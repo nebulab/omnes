@@ -1,62 +1,51 @@
 # frozen_string_literal: true
 
 module Omnes
-  # A triggered event
+  # Abstract class for events
   #
-  # An instance of it is automatically created on {Omnes::Bus#publish} and yielded
-  # to all subscriptions (see {Omnes::Bus#subscribe}.
+  # Any instance of a class inheriting from this one can be used as an event on
+  # {Omnes::Bus#publish}. It's yielded to all matching subscriptions (see
+  # {Omnes::Bus#subscribe}.
   #
   # @example
-  #   bus = Omnes::Bus.new
-  #   bus.register(:foo)
-  #   bus.subscribe(:foo) do |event|
-  #     puts event.payload[:bar]
-  #   end
-  #   bus.publish :foo, bar: 'bar'
+  #   class MyEvent < Omnes::Event
+  #     attr_reader :event
   #
-  # Besides, it can be accessed through the returned value in
-  # {Omnes::Bus#publish}.
-  # It can be useful for debugging and logging purposes, as it contains
-  # helpful metadata like the event time or the caller location.
+  #     def initialize(id:)
+  #       @id = id
+  #     end
+  #   end
+  #
+  #   bus = Omnes::Bus.new
+  #   bus.register(:my_event)
+  #   bus.subscribe(:my_event) do |event|
+  #     puts event.id
+  #   end
+  #   bus.publish(MyEvent.new(1))
+  #
+  # It can be accessed through the returned value in {Omnes::Bus#publish}.
+  #
+  # Custom classed can also be used as events. The only requirements is that
+  # they respond to a `#name` method, as this one does.
   class Event
-    # Name of the event
+    # Event name
+    #
+    # Use it to register or subscribe to tre event.
+    #
+    # It returns the underscored class name. E.g:
+    #
+    # Foo -> :foo
+    # FooBar -> :foo_bar
+    # FBar -> :f_bar
+    # Foo::Bar -> :foo_bar
     #
     # @return [Symbol]
-    attr_reader :name
-
-    # Hash with the options given to {Omnes::Bus#publish}
-    #
-    # @return [Hash]
-    attr_reader :payload
-
-    # Time of the event publication
-    #
-    # @return [Time]
-    attr_reader :publication_time
-
-    # Location for the event caller
-    #
-    # It's usually set by {Omnes::Bus#publish}, and it points to the caller of
-    # that method.
-    #
-    # @return [Thread::Backtrace::Location]
-    attr_reader :caller_location
-
-    # @api private
-    def initialize(payload:, caller_location:, name:, publication_time: Time.now.utc)
-      @payload = payload
-      @caller_location = caller_location
-      @publication_time = publication_time
-      @name = name
-    end
-
-    # Delegates to {#payload}
-    #
-    # @param key [Symbol]
-    #
-    # @return Any
-    def [](key)
-      payload[key]
+    def name
+      self.class.name
+          .gsub(/([[:alpha:]])([[:upper:]])/, '\1_\2')
+          .gsub("::", "_")
+          .downcase
+          .to_sym
     end
   end
 end

@@ -8,7 +8,7 @@ require "omnes/bus"
 # Include this module to have a class work as an {Omnes::Bus}.
 module Omnes
   def self.included(klass)
-    bus = Bus.new
+    bus = Bus.new(caller_location_start: 2)
     klass.define_method(:omnes_bus) { bus }
     Bus.instance_methods(false).each do |method|
       klass.define_method(method) do |*args, **kwargs, &block|

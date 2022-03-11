@@ -19,10 +19,25 @@ module Omnes
     # @return [Array<Omnes::Execution>]
     attr_reader :executions
 
+    # Location for the event caller
+    #
+    # It's usually set by {Omnes::Bus#publish}, and it points to the caller of
+    # that method.
+    #
+    # @return [Thread::Backtrace::Location]
+    attr_reader :caller_location
+
+    # Time of the event publication
+    #
+    # @return [Time]
+    attr_reader :publication_time
+
     # @api private
-    def initialize(event:, executions:)
+    def initialize(event:, executions:, caller_location:, publication_time:)
       @event = event
       @executions = executions
+      @caller_location = caller_location
+      @publication_time = publication_time
     end
   end
 end

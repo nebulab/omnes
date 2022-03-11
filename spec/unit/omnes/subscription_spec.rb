@@ -8,15 +8,19 @@ RSpec.describe Omnes::Subscription do
   let(:false_matcher) { ->(_candidate) { false } }
 
   describe "SINGLE_EVENT_MATCHER" do
-    it "returns true when published and candidate match" do
+    it "returns true when candidate name matches subscribed" do
+      event = Struct.new(:name).new(:foo)
+
       expect(
-        described_class::SINGLE_EVENT_MATCHER.(:foo, :foo)
+        described_class::SINGLE_EVENT_MATCHER.(:foo, event)
       ).to be(true)
     end
 
     it "returns false when published and candidate don't match" do
+      event = Struct.new(:name).new(:foo)
+
       expect(
-        described_class::SINGLE_EVENT_MATCHER.(:foo, :bar)
+        described_class::SINGLE_EVENT_MATCHER.(:bar, event)
       ).to be(false)
     end
   end

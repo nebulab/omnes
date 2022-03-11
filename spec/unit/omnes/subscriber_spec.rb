@@ -4,22 +4,32 @@ require "omnes/bus"
 require "omnes/subscriber"
 
 RSpec.describe Omnes::Subscriber do
-  let(:subscriber_class) { Class.new.include(described_class) }
+  let(:subscriber_class) do
+    Class.new do
+      include Omnes::Subscriber
+
+      attr_reader :called
+
+      def initialize
+        @called = false
+      end
+    end
+  end
   let(:bus) { Omnes::Bus.new }
 
   it "autodiscovers and subscribes methods matching registered events" do
     bus.register(:foo)
     subscriber_class.class_eval do
       def on_foo(_event)
-        __method__
+        @called = true
       end
     end
+    subscriber = subscriber_class.new
 
-    subscriber_class.new.subscribe_to(bus)
+    subscriber.subscribe_to(bus)
+    bus.publish(:foo)
 
-    subscription = bus.subscriptions[0]
-    expect(subscription.matches?(:foo)).to be(true)
-    expect(subscription.callback.(:event)).to be(:on_foo)
+    expect(subscriber.called).to be(true)
   end
 
   describe ".[]" do
@@ -28,16 +38,22 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class = Class.new do
         include Omnes::Subscriber[autodiscover_strategy: ->(event_name) { :"left_#{event_name}_right" }]
 
+        attr_reader :called
+
+        def inititalize
+          @called = false
+        end
+
         def left_foo_right(_event)
-          __method__
+          @called = true
         end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber.subscribe_to(bus)
+      bus.publish(:foo)
 
-      subscription = bus.subscriptions[0]
-      expect(subscription.matches?(:foo)).to be(true)
-      expect(subscription.callback.(:event)).to be(:left_foo_right)
+      expect(subscriber.called).to be(true)
     end
 
     it "can switch off autodiscovery" do
@@ -62,25 +78,34 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.class_eval do
         handle :foo, with: :foo
 
-        def foo; end
+        def foo(_event)
+          @called = true
+        end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber.subscribe_to(bus)
+      bus.publish(:foo)
 
-      expect(bus.subscriptions[0].matches?(:foo)).to be(true)
+      expect(subscriber.called).to be(true)
     end
 
     it "doesn't subscribe to other events" do
       bus.register(:foo)
+      bus.register(:bar)
       subscriber_class.class_eval do
         handle :foo, with: :foo
 
-        def foo; end
+        def foo(_event)
+          @called = true
+        end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber.subscribe_to(bus)
+      bus.publish(:bar)
 
-      expect(bus.subscriptions[0].matches?(:bar)).to be(false)
+      expect(subscriber.called).to be(false)
     end
 
     it "builds the callback from a matching method when given a symbol" do
@@ -88,14 +113,16 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.class_eval do
         handle :foo, with: :foo
 
-        def foo(event)
-          event
+        def foo(_event)
+          @called = true
         end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber.subscribe_to(bus)
+      bus.publish(:foo)
 
-      expect(bus.subscriptions[0].callback.(:bar)).to be(:bar)
+      expect(subscriber.called).to be(true)
     end
 
     it "builds the callback from given lambda" do
@@ -103,21 +130,23 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.class_eval do
         handle :foo, with: ->(instance, event) { instance.method(:bar).(event) }
 
-        def bar(event)
-          event
+        def bar(_event)
+          @called = true
         end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber.subscribe_to(bus)
+      bus.publish(:foo)
 
-      expect(bus.subscriptions[0].callback.(:foobar)).to be(:foobar)
+      expect(subscriber.called).to be(true)
     end
 
     it "raises when trying to subscribe to an unregistered event" do
       subscriber_class.class_eval do
         handle :foo, with: :foo
 
-        def foo; end
+        def foo(_event); end
       end
 
       expect {
@@ -134,14 +163,16 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.class_eval do
         handle_all with: :foo
 
-        def foo; end
+        def foo(_event)
+          @called = true
+        end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber.subscribe_to(bus)
+      bus.publish(:foo)
 
-      subscription = bus.subscriptions[0]
-      expect(subscription.matches?(:foo)).to be(true)
-      expect(subscription.matches?(:bar)).to be(true)
+      expect(subscriber.called).to be(true)
     end
 
     it "builds the callback from a matching method when given a symbol" do
@@ -149,14 +180,16 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.class_eval do
         handle_all with: :foo
 
-        def foo(event)
-          event
+        def foo(_event)
+          @called = true
         end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber.subscribe_to(bus)
+      bus.publish(:foo)
 
-      expect(bus.subscriptions[0].callback.(:bar)).to be(:bar)
+      expect(subscriber.called).to be(true)
     end
 
     it "builds the callback from given lambda" do
@@ -164,14 +197,16 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.class_eval do
         handle_all with: ->(instance, event) { instance.method(:bar).(event) }
 
-        def bar(event)
-          event
+        def bar(_event)
+          @called = true
         end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber.subscribe_to(bus)
+      bus.publish(:foo)
 
-      expect(bus.subscriptions[0].callback.(:foobar)).to be(:foobar)
+      expect(subscriber.called).to be(true)
     end
   end
 
@@ -183,12 +218,16 @@ RSpec.describe Omnes::Subscriber do
 
         handle_with_matcher TRUE_MATCHER, with: :foo
 
-        def foo; end
+        def foo(_event)
+          @called = true
+        end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber.subscribe_to(bus)
+      bus.publish(:foo)
 
-      expect(bus.subscriptions[0].matches?(:foo)).to be(true)
+      expect(subscriber.called).to be(true)
     end
 
     it "builds the callback from a matching method when given a symbol" do
@@ -198,14 +237,16 @@ RSpec.describe Omnes::Subscriber do
 
         handle_with_matcher TRUE_MATCHER, with: :foo
 
-        def foo(event)
-          event
+        def foo(_event)
+          @called = true
         end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber.subscribe_to(bus)
+      bus.publish(:foo)
 
-      expect(bus.subscriptions[0].callback.(:bar)).to be(:bar)
+      expect(subscriber.called).to be(true)
     end
 
     it "builds the callback from given lambda" do
@@ -215,48 +256,48 @@ RSpec.describe Omnes::Subscriber do
 
         handle_with_matcher TRUE_MATCHER, with: ->(instance, event) { instance.method(:bar).(event) }
 
-        def bar(event)
-          event
+        def bar(_event)
+          @called = true
         end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber.subscribe_to(bus)
+      bus.publish(:foo)
 
-      expect(bus.subscriptions[0].callback.(:foobar)).to be(:foobar)
+      expect(subscriber.called).to be(true)
     end
   end
 
   describe "#subscribe_to" do
-    it "can subscriber multiple instances to the same bus" do
+    it "can subscribe multiple instances to the same bus" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        attr_reader :value
-
         handle :foo, with: :foo
 
-        def initialize(value)
-          @value = value
-        end
-
         def foo(_event)
-          value
+          @called = true
         end
       end
+      subscriber1 = subscriber_class.new
+      subscriber2 = subscriber_class.new
 
-      subscriber_class.new(1).subscribe_to(bus)
-      subscriber_class.new(2).subscribe_to(bus)
+      subscriber1.subscribe_to(bus)
+      subscriber2.subscribe_to(bus)
+      bus.publish(:foo)
 
-      expect(bus.publish(:foo).executions.map(&:result)).to match_array([1, 2])
+      expect(subscriber1.called).to be(true)
+      expect(subscriber2.called).to be(true)
     end
 
-    it "can subscriber the same instance to different buses" do
+    it "can subscribe the same instance to different buses" do
       bus_one = Omnes::Bus.new
       bus_two = Omnes::Bus.new
       [bus_one, bus_two].each { |bus| bus.register(:foo) }
       subscriber_class.class_eval do
         handle :foo, with: :foo
 
-        def foo; end
+        def foo(_event); end
       end
       subscriber = subscriber_class.new
 
@@ -274,7 +315,7 @@ RSpec.describe Omnes::Subscriber do
         handle :foo, with: :foo
         handle :bar, with: :bar
 
-        def foo; end
+        def foo(_event); end
       end
 
       expect {
@@ -289,7 +330,7 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.class_eval do
         handle :foo, with: :foo
 
-        def foo; end
+        def foo(_event); end
       end
       subscriber = subscriber_class.new
 
@@ -305,14 +346,16 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.class_eval do
         handle :foo, with: ->(instance, event) { instance.method(:bar).(event) }
 
-        def bar(event)
-          event
+        def bar(_event)
+          @called = true
         end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber.subscribe_to(bus)
+      bus.publish(:foo)
 
-      expect(bus.subscriptions[0].callback.(:foo)).to be(:foo)
+      expect(subscriber.called).to be(true)
     end
 
     it "accepts the callback builder as a one arg callable" do
@@ -320,14 +363,16 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class.class_eval do
         handle :foo, with: ->(instance) { ->(event) { instance.method(:bar).(event) } }
 
-        def bar(event)
-          event
+        def bar(_event)
+          @called = true
         end
       end
+      subscriber = subscriber_class.new
 
-      subscriber_class.new.subscribe_to(bus)
+      subscriber.subscribe_to(bus)
+      bus.publish(:foo)
 
-      expect(bus.subscriptions[0].callback.(:foo)).to be(:foo)
+      expect(subscriber.called).to be(true)
     end
   end
 end
