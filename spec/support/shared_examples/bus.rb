@@ -358,46 +358,6 @@ RSpec.shared_examples "bus" do
     end
   end
 
-  describe "#unregister" do
-    it "removes the event from the registry" do
-      bus = subject.new
-      bus.register(:foo)
-
-      bus.unregister(:foo)
-
-      expect(bus.registry.registered?(:foo)).to be(false)
-    end
-
-    it "removes subscriptions for that event" do
-      bus = subject.new
-      bus.register(:foo)
-      subscription = bus.subscribe(:foo)
-
-      bus.unregister(:foo)
-
-      expect(bus.subscriptions).not_to include(subscription)
-    end
-
-    it "doesn't remove subscriptions for other events" do
-      bus = subject.new
-      bus.register(:foo)
-      bus.register(:bar)
-      subscription = bus.subscribe(:foo)
-
-      bus.unregister(:bar)
-
-      expect(bus.subscriptions).to include(subscription)
-    end
-
-    it "raises when given event name hasn't been registered" do
-      bus = subject.new
-
-      expect {
-        bus.unregister(:foo)
-      }.to raise_error(Omnes::UnknownEventError, /not registered/)
-    end
-  end
-
   describe "#with_subscriptions" do
     it "returns a new instance with given subscriptions" do
       bus = subject.new

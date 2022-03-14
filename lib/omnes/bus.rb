@@ -184,19 +184,6 @@ module Omnes
       @subscriptions.delete(subscription)
     end
 
-    # Unregisters an event
-    #
-    # Unregisters the event and removes associated subscriptions.
-    #
-    # @param event_name [Symbol]
-    def unregister(event_name)
-      registry.unregister(event_name)
-      event = self.class.EventType(event_name)
-      subscriptions_for_event(event).each do |subscription|
-        unsubscribe(subscription)
-      end
-    end
-
     # Returns new bus with same registry and only specified subscriptions
     #
     # That's something useful for testing purposes, as it allows to silence
