@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "omnes/subscription"
-require "omnes/subscriber/callback_builder"
+require "omnes/subscriber/adapter"
 require "omnes/subscriber/state"
 
 module Omnes
@@ -191,7 +191,7 @@ module Omnes
         @_mutex.synchronize do
           @_state.add_subscription_definition do |bus|
             bus.registry.check_event_name(event_name)
-            [Subscription::SINGLE_EVENT_MATCHER.curry[event_name], CallbackBuilder.Type(with)]
+            [Subscription::SINGLE_EVENT_MATCHER.curry[event_name], Adapter.Type(with)]
           end
         end
       end
@@ -202,7 +202,7 @@ module Omnes
       def handle_all(with:)
         @_mutex.synchronize do
           @_state.add_subscription_definition do |_bus|
-            [Subscription::ALL_EVENTS_MATCHER, CallbackBuilder.Type(with)]
+            [Subscription::ALL_EVENTS_MATCHER, Adapter.Type(with)]
           end
         end
       end
@@ -214,7 +214,7 @@ module Omnes
       def handle_with_matcher(matcher, with:)
         @_mutex.synchronize do
           @_state.add_subscription_definition do |_bus|
-            [matcher, CallbackBuilder.Type(with)]
+            [matcher, Adapter.Type(with)]
           end
         end
       end

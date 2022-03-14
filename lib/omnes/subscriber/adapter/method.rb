@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require "omnes/subscriber/callback_builder/method/errors"
+require "omnes/subscriber/adapter/method/errors"
 
 module Omnes
   module Subscriber
-    module CallbackBuilder
+    module Adapter
       # Builds a callback from a method of the instance
       class Method
         attr_reader :name

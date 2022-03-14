@@ -326,7 +326,7 @@ RSpec.describe Omnes::Subscriber do
 
       expect {
         subscriber_class.new.subscribe_to(bus)
-      }.to raise_error(described_class::CallbackBuilder::Method::UnknownMethodSubscriptionAttemptError)
+      }.to raise_error(described_class::Adapter::Method::UnknownMethodSubscriptionAttemptError)
 
       expect(bus.subscriptions.count).to be(0)
     end
@@ -347,7 +347,7 @@ RSpec.describe Omnes::Subscriber do
       }.to raise_error(described_class::MultipleSubscriberSubscriptionAttemptError)
     end
 
-    it "accepts the callback builder as a two args callable" do
+    it "accepts the adapter as a two args callable" do
       bus.register(:foo)
       subscriber_class.class_eval do
         handle :foo, with: ->(instance, event) { instance.method(:bar).(event) }
@@ -364,7 +364,7 @@ RSpec.describe Omnes::Subscriber do
       expect(subscriber.called).to be(true)
     end
 
-    it "accepts the callback builder as a one arg callable" do
+    it "accepts the adapter as a one arg callable" do
       bus.register(:foo)
       subscriber_class.class_eval do
         handle :foo, with: ->(instance) { ->(event) { instance.method(:bar).(event) } }

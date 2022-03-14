@@ -37,3 +37,7 @@ Lint/ConstantDefinitionInBlock:
 
 Metrics/MethodLength:
   Max: 15
+
+Style/MutableConstant:
+  Exclude:
+    - 'spec/**/*'

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "omnes/subscription"
-require "omnes/subscriber/callback_builder"
+require "omnes/subscriber/adapter"
 require "omnes/subscriber/errors"
 
 module Omnes
@@ -50,15 +50,15 @@ module Omnes
           add_subscription_definition do |_bus|
             [
               Subscription::SINGLE_EVENT_MATCHER.curry[event_name],
-              CallbackBuilder.Type(CallbackBuilder::Method.new(method_name))
+              Adapter.Type(Adapter::Method.new(method_name))
             ]
           end
         end
       end
 
       def subscribe_definitions(definitions, bus, instance)
-        matcher_with_callbacks = definitions.map do |(matcher, builder)|
-          [matcher, builder.curry[instance]]
+        matcher_with_callbacks = definitions.map do |(matcher, adapter)|
+          [matcher, adapter.curry[instance]]
         end
 
         matcher_with_callbacks.map { |matcher, callback| bus.subscribe_with_matcher(matcher, callback) }

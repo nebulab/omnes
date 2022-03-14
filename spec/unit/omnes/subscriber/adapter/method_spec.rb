@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "omnes/subscriber/callback_builder/method"
+require "omnes/subscriber/adapter/method"
 
-RSpec.describe Omnes::Subscriber::CallbackBuilder::Method do
+RSpec.describe Omnes::Subscriber::Adapter::Method do
   describe "#call" do
     it "returns lambda that calls method with given event" do
       instance = Class.new do

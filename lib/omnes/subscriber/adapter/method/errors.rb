@@ -4,7 +4,7 @@ require "omnes/errors"
 
 module Omnes
   module Subscriber
-    module CallbackBuilder
+    module Adapter
       class Method
         # Raised when trying to subscribe to a missing method
         class UnknownMethodSubscriptionAttemptError < Omnes::Error
