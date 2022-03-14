@@ -214,7 +214,7 @@ RSpec.describe Omnes::Subscriber do
     it "subscribes to events matching with given matcher" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        TRUE_MATCHER = ->(_candidate) { true }
+        ::TRUE_MATCHER = ->(_candidate) { true }
 
         handle_with_matcher TRUE_MATCHER, with: :foo
 
@@ -228,12 +228,14 @@ RSpec.describe Omnes::Subscriber do
       bus.publish(:foo)
 
       expect(subscriber.called).to be(true)
+    ensure
+      Object.send(:remove_const, :TRUE_MATCHER)
     end
 
     it "builds the callback from a matching method when given a symbol" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        TRUE_MATCHER = ->(_candidate) { true }
+        ::TRUE_MATCHER = ->(_candidate) { true }
 
         handle_with_matcher TRUE_MATCHER, with: :foo
 
@@ -247,12 +249,14 @@ RSpec.describe Omnes::Subscriber do
       bus.publish(:foo)
 
       expect(subscriber.called).to be(true)
+    ensure
+      Object.send(:remove_const, :TRUE_MATCHER)
     end
 
     it "builds the callback from given lambda" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        TRUE_MATCHER = ->(_candidate) { true }
+        ::TRUE_MATCHER = ->(_candidate) { true }
 
         handle_with_matcher TRUE_MATCHER, with: ->(instance, event) { instance.method(:bar).(event) }
 
@@ -266,6 +270,8 @@ RSpec.describe Omnes::Subscriber do
       bus.publish(:foo)
 
       expect(subscriber.called).to be(true)
+    ensure
+      Object.send(:remove_const, :TRUE_MATCHER)
     end
   end
 
