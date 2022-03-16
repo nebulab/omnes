@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "omnes/subscriber/adapter/active_job"
 require "omnes/subscriber/adapter/method"
 require "omnes/subscriber/adapter/sidekiq"
 
