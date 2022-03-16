@@ -17,26 +17,48 @@ RSpec.describe Omnes::Subscriber do
   end
   let(:bus) { Omnes::Bus.new }
 
-  it "autodiscovers and subscribes methods matching registered events" do
+  it "autodiscover is off by default" do
     bus.register(:foo)
-    subscriber_class.class_eval do
+    subscriber_class = Class.new do
+      include Omnes::Subscriber
+
       def on_foo(_event)
-        @called = true
+        __method__
       end
     end
-    subscriber = subscriber_class.new
 
-    subscriber.subscribe_to(bus)
-    bus.publish(:foo)
+    subscriber_class.new.subscribe_to(bus)
 
-    expect(subscriber.called).to be(true)
+    expect(bus.subscriptions.empty?).to be(true)
   end
 
   describe ".[]" do
+    it "can switch on autodiscovery" do
+      bus.register(:foo)
+      subscriber_class = Class.new do
+        include Omnes::Subscriber[autodiscover: true]
+
+        attr_reader :called
+
+        def on_foo(_event)
+          @called = true
+        end
+      end
+      subscriber = subscriber_class.new
+
+      subscriber.subscribe_to(bus)
+      bus.publish(:foo)
+
+      expect(subscriber.called).to be(true)
+    end
+
     it "can specify custom strategy to autodiscover" do
       bus.register(:foo)
       subscriber_class = Class.new do
-        include Omnes::Subscriber[autodiscover_strategy: ->(event_name) { :"left_#{event_name}_right" }]
+        include Omnes::Subscriber[
+          autodiscover: true,
+          autodiscover_strategy: ->(event_name) { :"left_#{event_name}_right" }
+        ]
 
         attr_reader :called
 
@@ -54,21 +76,6 @@ RSpec.describe Omnes::Subscriber do
       bus.publish(:foo)
 
       expect(subscriber.called).to be(true)
-    end
-
-    it "can switch off autodiscovery" do
-      bus.register(:foo)
-      subscriber_class = Class.new do
-        include Omnes::Subscriber[autodiscover_strategy: nil]
-
-        def on_foo(_event)
-          __method__
-        end
-      end
-
-      subscriber_class.new.subscribe_to(bus)
-
-      expect(bus.subscriptions.empty?).to be(true)
     end
   end
 

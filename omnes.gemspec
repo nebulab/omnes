@@ -31,6 +31,8 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "dry-configurable", "~> 0.14"
+
   spec.add_development_dependency "activejob", "~> 7.0"
   spec.add_development_dependency "sidekiq", "~> 6.4"
 end

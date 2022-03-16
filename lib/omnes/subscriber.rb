@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "dry/configurable"
 require "omnes/subscription"
 require "omnes/subscriber/adapter"
 require "omnes/subscriber/state"
@@ -12,13 +13,14 @@ module Omnes
   #
   # This is how to specify event handlers.
   #
-  # 1. Match an event name with a method name prepended with `:on_`.
+  # 1. Match an event name with a method name prepended with `:on_`, when
+  # autodiscove is on.
   #
   # @example
   #   require 'omnes/subscriber'
   #
   #   class MySubscriber
-  #     include Omnes::Subscriber
+  #     include Omnes::Subscriber[autodiscover: true]
   #
   #     def on_foo(event)
   #       # do_something
@@ -30,6 +32,7 @@ module Omnes
   # @example
   #   class MySubscriber
   #     include Omnes::Subscriber[
+  #       autodiscover: true,
   #       autodiscover_strategy: ->(event_name) { event_name }
   #     ]
   #
@@ -39,7 +42,10 @@ module Omnes
   #     end
   #   end
   #
-  # Set `autodiscover_strategy` to `nil` to disable that feature altogether.
+  # You can also make autodiscover on by default:
+  #
+  # @example
+  #   Omnes::Subscriber.config.autodiscover = true
   #
   # 2. Use the `handle` class method to subscribe a method to a single event.
   #
@@ -127,8 +133,14 @@ module Omnes
   # - You can subscribe the same instance to different buses
   # - You can't subscribe the same instance to the same bus more than once
   module Subscriber
+    extend Dry::Configurable
+
     # @api private
     ON_PREFIX_STRATEGY = ->(event_name) { :"on_#{event_name}" }
+
+    setting :autodiscover, default: false
+
+    setting :autodiscover_strategy, default: ON_PREFIX_STRATEGY
 
     # Includes with options
     #
@@ -136,8 +148,8 @@ module Omnes
     #
     # @example
     #   include Omnes::Subscriber[autodiscover_strategy: my_strategy]
-    def self.[](autodiscover_strategy: ON_PREFIX_STRATEGY)
-      Module.new(autodiscover_strategy: autodiscover_strategy)
+    def self.[](autodiscover: config.autodiscover, autodiscover_strategy: config.autodiscover_strategy)
+      Module.new(autodiscover_strategy: autodiscover ? autodiscover_strategy : nil)
     end
 
     # @api private

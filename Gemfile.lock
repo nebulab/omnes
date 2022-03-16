@@ -2,6 +2,7 @@ PATH
   remote: .
   specs:
     omnes (0.1.0)
+      dry-configurable (~> 0.14)
 
 GEM
   remote: https://rubygems.org/
@@ -18,6 +19,11 @@ GEM
     concurrent-ruby (1.1.9)
     connection_pool (2.2.5)
     diff-lcs (1.5.0)
+    dry-configurable (0.14.0)
+      concurrent-ruby (~> 1.0)
+      dry-core (~> 0.6)
+    dry-core (0.7.1)
+      concurrent-ruby (~> 1.0)
     globalid (1.0.0)
       activesupport (>= 5.0)
     i18n (1.10.0)
