@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "dry/configurable"
+
 module Omnes
   # Abstract class for events
   #
@@ -28,6 +30,19 @@ module Omnes
   # Custom classed can also be used as events. The only requirements is that
   # they respond to a `#name` method, as this one does.
   class Event
+    extend Dry::Configurable
+
+    # @api private
+    DEFAULT_NAME_BUILDER = lambda do |instance|
+      instance.class.name
+              .gsub(/([[:alpha:]])([[:upper:]])/, '\1_\2')
+              .gsub("::", "_")
+              .downcase
+              .to_sym
+    end
+
+    setting :name_builder, default: DEFAULT_NAME_BUILDER
+
     # Event name
     #
     # Use it to register or subscribe to tre event.
@@ -41,11 +56,7 @@ module Omnes
     #
     # @return [Symbol]
     def name
-      self.class.name
-          .gsub(/([[:alpha:]])([[:upper:]])/, '\1_\2')
-          .gsub("::", "_")
-          .downcase
-          .to_sym
+      self.class.config.name_builder.(self)
     end
   end
 end
