@@ -27,12 +27,24 @@ module Omnes
   #
   # It can be accessed through the returned value in {Omnes::Bus#publish}.
   #
-  # Custom classed can also be used as events. The only requirements is that
+  # Custom classes an also be used as events. The only requirements is that
   # they respond to a `#name` method, as this one does.
   class Event
     extend Dry::Configurable
 
-    # @api private
+    # Default name builer for event classes.
+    #
+    # It returns the underscored class name. E.g:
+    #
+    # Foo -> :foo
+    # FooBar -> :foo_bar
+    # FBar -> :f_bar
+    # Foo::Bar -> :foo_bar
+    #
+    # You can change it with `Omnes::Event.config.name_builder =
+    # my_name_builder`.
+    #
+    # @return [Symbol]
     DEFAULT_NAME_BUILDER = lambda do |instance|
       instance.class.name
               .gsub(/([[:alpha:]])([[:upper:]])/, '\1_\2')
@@ -45,16 +57,8 @@ module Omnes
 
     # Event name
     #
-    # Use it to register or subscribe to tre event.
+    # Use it to register or subscribe to the event.
     #
-    # It returns the underscored class name. E.g:
-    #
-    # Foo -> :foo
-    # FooBar -> :foo_bar
-    # FBar -> :f_bar
-    # Foo::Bar -> :foo_bar
-    #
-    # @return [Symbol]
     def name
       self.class.config.name_builder.(self)
     end
