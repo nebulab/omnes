@@ -385,5 +385,14 @@ RSpec.shared_examples "bus" do
 
       expect(new_bus.registry).to be(bus.registry)
     end
+
+    it "caller location start is 1" do
+      bus = subject.new
+      bus.register(:foo)
+
+      new_bus = bus.with_subscriptions([])
+
+      expect(new_bus.cal_loc_start).to be(1)
+    end
   end
 end

@@ -5,18 +5,42 @@ require "omnes/event"
 require "omnes/subscriber"
 require "omnes/version"
 
-# Pub/sub bus behavior
+# Pub/sub library for Ruby.
 #
-# Include this module to have a class work as an {Omnes::Bus}.
+# There're two ways to make use of the pub/sub features Omnes provides:
+#
+# - Standalone, through an {Omnes::Bus} instance.
+# - Mixing in the behavior in another class by including the {Omnes} module.
+#
+# Refer to {Omnes::Bus} documentation for the available methods. The only
+# difference for the mixing use case is that the methods are directly called in
+# the including instance.
+#
+# ```
+# class MyClass
+#   include Omnes
+#
+#   def initialize
+#     register(:foo)
+#   end
+#
+#   def call
+#     publish(:foo, bar: :baz)
+#   end
+# end
+# ```
+#
+# Refer to {Omnes::Subscriber} for how to provide event handlers through methods
+# defined in a class.
 module Omnes
-  # Shortcut to access components configuration
+  # Shortcut to access the configuration for different Omnes components
   #
   # @return [Omnes::Config]
   def self.config
     Config
   end
 
-  # Wrapper for components configuration
+  # Wrapper for the configuration of Omnes components
   module Config
     # {Omnes::Subscriber} configuration
     #
@@ -33,8 +57,9 @@ module Omnes
     end
   end
 
+  # @api private
   def self.included(klass)
-    bus = Bus.new(caller_location_start: 2)
+    bus = Bus.new(cal_loc_start: 2)
     klass.define_method(:omnes_bus) { bus }
     Bus.instance_methods(false).each do |method|
       klass.define_method(method) do |*args, **kwargs, &block|

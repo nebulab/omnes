@@ -1,0 +1,9 @@
+--title 'omnes'
+--query '@api.text != "private"'
+--embed-mixins
+--output doc
+--readme README.md
+--files CHANGELOG.md
+--markup markdown
+--markup-provider=redcarpet
+lib/**/*.rb

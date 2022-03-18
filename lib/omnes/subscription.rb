@@ -6,16 +6,16 @@ require "omnes/execution"
 module Omnes
   # Subscription to an event
   #
-  # An instance of it is returned on {Omnes::Bus#subscribe}.
+  # An instance of it is returned on {Omnes::Bus} subscription methods.
   #
-  # You're not expected to perform any action with it, besides using it as
-  # a reference to unsubscribe.
+  # Usually, it isn't used directly beyond as a reference to unsubscribe.
   #
-  # @example
-  #   bus = Omnes::Bus.new
-  #   bus.register(:foo)
-  #   subscription = bus.subscribe(:foo) { do_something }
-  #   bus.unsubscribe subscription
+  # ```
+  # bus = Omnes::Bus.new
+  # bus.register(:foo)
+  # subscription = bus.subscribe(:foo) { |_event| do_something }
+  # bus.unsubscribe(subscription)
+  # ```
   class Subscription
     SINGLE_EVENT_MATCHER = lambda do |subscribed, candidate|
       subscribed == candidate.name
@@ -47,7 +47,10 @@ module Omnes
       matcher.(candidate)
     end
 
-    # @api private
+    # Returns self within a single-item array
+    #
+    # This method can be helpful to act polymorphic to an array of subscriptions
+    # from an {Omnes::Subscriber}, usually for testing purposes.
     def subscriptions
       [self]
     end

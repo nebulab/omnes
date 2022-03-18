@@ -1,54 +1,108 @@
 # frozen_string_literal: true
 
+require "omnes/publication"
 require "omnes/registry"
 require "omnes/subscription"
-require "omnes/publication"
 require "omnes/unstructured_event"
 
 module Omnes
-  # An Event Bus for pub/sub architectures
+  # An event bus for the publish/subscribe pattern
   #
-  # An instance of this class works as an Event Bus middleware for publishers of
+  # An instance of this class acts as an event bus middleware for publishers of
   # events and their subscriptions.
   #
-  # The same behavior can be incorporated into any class that includes the
-  # {Omnes} module. See there for more details.
+  # ```
+  # bus = Omnes::Bus.new
+  # ```
   #
-  # Before working with a given event, it needs to be registered in the bus.
+  # Before being able to work with a given event, its name (a {Symbol}) needs to
+  # be registered:
   #
-  # @example
-  #   bus = Omnes::Bus.new
-  #   bus.register(:foo)
+  # ```
+  # bus.register(:foo)
+  # ```
   #
-  # You can then publish it alongside a payload:
+  # An event can be anything responding to a method `:name` which, needless to
+  # say, must match with a registered name.
   #
-  # @example
-  #   bus.publish(:foo, bar: true)
+  # Typically, there're two main ways to generate events.
   #
-  # Otherwise, you can use an event instance:
+  # An event can be generated at publication time, where you provide its name
+  # and a payload to be consumed by its subscribers.
   #
-  # @example
-  #   class Foo < Omnes::Event
-  #     attr_reader :bar
+  # ```
+  # bus.publish(:foo, bar: :baz)
+  # ```
   #
-  #     def initialize
-  #       @bar = true
-  #     end
+  # In that case, an instance of {Omnes::UnstructuredEvent} is generated
+  # under the hood.
+  #
+  # Unstructured events are straightforward to create and use, but they're
+  # harder to debug as they're defined at publication time. On top of that,
+  # other features, such as event persistence, can't be reliably built on top of
+  # them.
+  #
+  # You can also publish an instance of a class descending from {Omnes::Event}.
+  # The only fancy thing it provides is an OOTB event name generated based on
+  # the class name. See {Omnes::Event} for details.
+  #
+  # ```
+  # class Foo < Omnes::Event
+  #   attr_reader :bar
+  #
+  #   def initialize
+  #     @bar = :baz
   #   end
+  # end
   #
-  #   bus.publish(Foo.new)
+  # bus.publish(Foo.new)
+  # ```
   #
+  # Instance-backed events provide a well-defined structure, and other features,
+  # like event persistence, can be added on top of them.
   #
-  # Lastly, you use {#subscribe} to add a subscription to the event.
+  # Regardless of the type of published event, it's yielded to its subscriptions
+  # so that they can do their job:
   #
-  # @example
-  #   bus.subscribe(:foo) do |event|
-  #     do_something if event.payload[:bar]
+  # ```
+  # bus.subscribe(:foo) do |event|
+  #   # event.payload[:bar] or event[:bar] for unstructured events
+  #   # event.bar for the event instance example
+  # end
+  # ```
+  #
+  # The subscription code can be given as a block (previous example) or as
+  # anything responding to a method `#call`.
+  #
+  # ```
+  # class MySubscription
+  #   def call(event)
+  #     # ...
   #   end
+  # end
+  #
+  # bus.subscribe(:foo, MySubscription.new)
+  # ```
+  #
+  # See also {Omnes::Subscriber} for a more powerful way to define standalone
+  # event handlers.
+  #
+  # You can also create a subscription that will run for all events:
+  #
+  # ```
+  # bus.subscribe_to_all(MySubscription.new)
+  # ```
+  #
+  # Custom matchers can be defined. A matcher is something responding to `#call`
+  # and taking the event as an argument. It needs to return `true` or `false` to
+  # decide whether the subscription needs to be run for that event.
+  #
+  # ```
+  # matcher ->(event) { event.name.start_with?(:foo) }
+  #
+  # bus.subscribe_with_matcher(matcher, MySubscription.new)
+  # ```
   class Bus
-    # @api private
-    attr_reader :subscriptions, :registry, :caller_location_start
-
     # @api private
     def self.EventType(value, **payload)
       case value
@@ -59,87 +113,103 @@ module Omnes
       end
     end
 
-    def initialize(subscriptions: [], registry: Registry.new, caller_location_start: 1)
-      @subscriptions = subscriptions
+    # @api private
+    attr_reader :cal_loc_start,
+                :subscriptions
+
+    # @!attribute [r] registry
+    #   @return [Omnes::Bus::Registry]
+    attr_reader :registry
+
+    def initialize(cal_loc_start: 1, registry: Registry.new, subscriptions: [])
+      @cal_loc_start = cal_loc_start
       @registry = registry
-      @caller_location_start = caller_location_start
+      @subscriptions = subscriptions
     end
 
-    # Registers an event
-    #
-    # This step is needed before publishing, subscribing or unsubscribing an
-    # event. It helps to prevent typos and naming collision.
-    #
-    # @example
-    #   bus = Omnes::Bus.new
-    #   bus.register(:foo)
+    # Registers an event name
     #
     # @param event_name [Symbol]
     # @param caller_location [Thread::Backtrace::Location] Caller location
-    # associated to the registration. Useful for debugging (shown in error
-    # messages). It defaults to this method's caller.
+    #   associated to the registration. Useful for debugging (shown in error
+    #   messages). It defaults to this method's caller.
     #
     # @raise [Omnes::AlreadyRegisteredEventError] when the event is already
-    # registered
+    #   registered
     # @raise [Omnes::InvalidEventNameError] when the event is not a {Symbol}
     #
     # @return [Omnes::Registry::Registration]
-    def register(event_name, caller_location: caller_locations(caller_location_start)[0])
+    def register(event_name, caller_location: caller_locations(cal_loc_start)[0])
       registry.register(event_name, caller_location: caller_location)
     end
 
-    # Publishes an event, running all its subscriptions
+    # Publishes an event, running all matching subscriptions
     #
     # @overload publish(event_name, caller_location:, **payload)
-    #   Publishes an {Omnes::UnstructuredEvent} instance.
-    #   @param event_name [Symbol] Name of the event
-    #   @param caller_location [Thread::Backtrace::Location] Caller location
-    #   associated to the publication. Useful for debugging (shown in error
-    #   messages). It defaults to this method's caller.
-    #   @param **payload [Hash] Payload published with the event, meant to be
-    #   consumed by subscriptions
-    #
-    #   @example
-    #     bus = Omnes::Bus.new
-    #     bus.register(:foo)
-    #     bus.publish(:foo, bar: true)
-    #
-    #     @return [Omnes::Publication] A publication object encapsulating metadata for
-    #     the event and the originated subscription executions
+    #   @param event_name [Symbol] Name for the generated
+    #     {Omnes::UnstructuredEvent} event.  {Omnes::UnstrUnstructuredEvent}
+    #     published with the event, meant to be consumed by matching
+    #     subscriptions.
+    #   @param **payload [Hash] Payload for the generated
+    #     {Omnes::UnstrUnstructuredEvent}
     #
     # @overload publish(event, caller_location:)
-    #   Publishes an event instance.
-    #   @param event [#name] The event instance
+    #   @param event [#name] An event instance
     #
-    #   @return [Omnes::Publication] A publication object encapsulating metadata for
-    #   the event and the originated subscription executions
+    # @param caller_location [Thread::Backtrace::Location] Caller location
+    #   associated to the publication. Useful for debugging (shown in error
+    #   messages). It defaults to this method's caller.
     #
-    #   @example
-    #     bus = Omnes::Bus.new
-    #     class Foo < Omnes::Event
-    #       attr_reader :bar
+    # @return [Omnes::Publication] A publication object encapsulating metadata
+    #   for the event and the originated subscription executions
     #
-    #       def initialize
-    #         @bar = true
-    #       end
-    #     end
-    #     bus.register(:foo)
-    #     bus.publish(Foo.new)
-    def publish(event,
-                caller_location: caller_locations(caller_location_start)[0], **payload)
+    # @raise [Omnes::UnknownEventError] When event name has not been registered
+    def publish(event, caller_location: caller_locations(cal_loc_start)[0], **payload)
+      publication_time = Time.now.utc
       event = self.class.EventType(event, **payload)
       registry.check_event_name(event.name)
-      executions = subscriptions_for_event(event).map do |subscription|
-        subscription.(event)
-      end
+      executions = execute_subscriptions_for_event(event)
+
       Publication.new(
         event: event,
         executions: executions,
         caller_location: caller_location,
-        publication_time: Time.now.utc
+        publication_time: publication_time
       )
     end
 
+    # Adds a subscription for a single event
+    #
+    # @param event_name [Symbol] Name of the event
+    # @param callable [#call] Subscription callback taking the event
+    # @yield [event] Subscription callback if callable is not given
+    #
+    # @return [Omnes::Subscription]
+    #
+    # @raise [Omnes::UnknownEventError] When event name has not been registered
+    def subscribe(event_name, callable = nil, &block)
+      registry.check_event_name(event_name)
+
+      subscribe_with_matcher(Subscription::SINGLE_EVENT_MATCHER.curry[event_name], callable, &block)
+    end
+
+    # Adds a subscription for all events
+    #
+    # @param callable [#call] Subscription callback taking the event
+    # @yield [event] Subscription callback if callable is not given
+    #
+    # @return [Omnes::Subscription]
+    def subscribe_to_all(callable = nil, &block)
+      subscribe_with_matcher(Subscription::ALL_EVENTS_MATCHER, callable, &block)
+    end
+
+    # Adds a subscription with given matcher
+    #
+    # @param matcher [#call] Callable taking the event and returning a boolean
+    # @param callable [#call] Subscription callback taking the event
+    # @yield [event] Subscription callback if callable is not given
+    #
+    # @return [Omnes::Subscription]
     def subscribe_with_matcher(matcher, callable = nil, &block)
       callback = callable || block
       Subscription.new(matcher: matcher, callback: callback).tap do |subscription|
@@ -147,54 +217,33 @@ module Omnes
       end
     end
 
-    # Subscribe a subscription to one or more events
-    #
-    # The provided callable object or block is executed every time a matching
-    # event is published.
-    #
-    # @param event_name [Symbol] The name of the event
-    # @param callable [#call] Code to execute when a matching is triggered. It
-    # takes the published event.
-    # @yield Alternative way to provide the code to execute
-    #
-    # @return [Omnes::Bus#Subscription] A subscription object that can be used as
-    # reference in order to remove the subscription.
-    #
-    # @example
-    #   bus = Omnes::Bus.new
-    #   bus.register(:foo)
-    #   bus.subscribe(:foo) do |event|
-    #     do_something if event.payload[:foo]
-    #   end
-    def subscribe(event_name, callable = nil, &block)
-      registry.check_event_name(event_name)
-      subscribe_with_matcher(Subscription::SINGLE_EVENT_MATCHER.curry[event_name], callable, &block)
-    end
-
-    def subscribe_to_all(callable = nil, &block)
-      subscribe_with_matcher(Subscription::ALL_EVENTS_MATCHER, callable, &block)
-    end
-
     # Removes a subscription
-    #
-    # The subscribed is removed from the queue.
     #
     # @param subscription [Omnes::Subscription]
     def unsubscribe(subscription)
       @subscriptions.delete(subscription)
     end
 
-    # Returns new bus with same registry and only specified subscriptions
+    # Returns a new bus with same registry and only the specified subscriptions
     #
     # That's something useful for testing purposes, as it allows to silence
     # subscriptions that are not part of the system under test.
     #
     # @param subscriptions [Array<Omnes::Subscription>]
     def with_subscriptions(subscriptions)
-      self.class.new(subscriptions: subscriptions, registry: registry)
+      Bus.new(
+        subscriptions: subscriptions,
+        registry: registry
+      )
     end
 
     private
+
+    def execute_subscriptions_for_event(event)
+      subscriptions_for_event(event).map do |subscription|
+        subscription.(event)
+      end
+    end
 
     def subscriptions_for_event(event_name)
       @subscriptions.select do |subscription|

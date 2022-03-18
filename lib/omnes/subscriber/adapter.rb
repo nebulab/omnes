@@ -8,16 +8,16 @@ module Omnes
   module Subscriber
     # Adapters to build {Omnes::Subscription}'s callbacks
     #
-    # Adapters need to implement a method `#call` taking the instance of the
-    # {Omnes::Subscriber). They need to create an
-    # {Omnes::Subscripiton#callback}. See {Omnes::Bus#subscribe}'s callable
-    # argument for details.
+    # Adapters need to implement a method `#call` taking the instance of
+    # {Omnes::Subscriber} and the event.
+    #
+    # Alternatively, they can be curried and only take the instance as an
+    # argument, returning a one-argument callable taking the event.
     module Adapter
       # @api private
-      # TODO: Simplify when currying the adapter by just taking the `#call`
-      # method regardless of the value being a callable object or a proc. Waiting
-      # for https://bugs.ruby-lang.org/issues/18620
-      #   > builder.method(:call).curry[instance]
+      # TODO: Simplify when when we can take callables and Proc in a polymorphic
+      # way: https://bugs.ruby-lang.org/issues/18644
+      #   > builder.to_proc.curry[instance]
       def self.Type(value)
         case value
         when Symbol

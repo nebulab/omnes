@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 module Omnes
-  # Execution of a {Omnes::Subscription}
+  # Execution of an {Omnes::Subscription}
   #
-  # When an event is published, it executes all subscribed subscriptions. Every
+  # When an event is published, it executes all matching subscriptions. Every
   # single execution is represented as an instance of this class. It contains
-  # the result value of the subscriptions along with helpful metadata as the time of
-  # the execution or a benchmark for it.
+  # the result value of the subscriptions along with helpful metadata as the
+  # time of the execution or a benchmark for it.
   #
   # You'll most likely interact with this class for debugging or logging
-  # purposes through the returned value in {Omnes::Bus#publish}.
+  # purposes through a {Omnes::Publication} returned on {Omnes::Bus#publish}.
   class Execution
     # The subscription to which the execution belongs
     #

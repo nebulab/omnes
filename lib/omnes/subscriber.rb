@@ -1,137 +1,126 @@
 # frozen_string_literal: true
 
 require "dry/configurable"
-require "omnes/subscription"
 require "omnes/subscriber/adapter"
 require "omnes/subscriber/state"
+require "omnes/subscription"
 
 module Omnes
-  # Supscription provider for an {Omnes::Bus}
+  # Supscriptions provider for a {Omnes::Bus}
   #
-  # You can include this module in a class to use its methods as handlers for an
-  # event bus.
+  # This module allows an including class to use its context to create event
+  # handlers.
   #
-  # This is how to specify event handlers.
+  # In its simplest form, you can match an event to a method in the class.
   #
-  # 1. Match an event name with a method name prepended with `:on_`, when
-  # autodiscove is on.
+  # ```
+  # class MySubscriber
+  #   include Omnes::Subscriber
   #
-  # @example
-  #   require 'omnes/subscriber'
+  #   handle :foo, with: :my_handler
   #
-  #   class MySubscriber
-  #     include Omnes::Subscriber[autodiscover: true]
+  #   def my_handler(event)
+  #     # do_something
+  #   end
+  # end
+  # ```
   #
-  #     def on_foo(event)
-  #       # do_something
-  #     end
+  # Equivalent to the subscribe methods in {Omnes::Bus}, you can also subscribe
+  # to all events or use a custom matcher:
+  #
+  # ```
+  # class MySubscriber
+  #   include Omnes::Subscriber
+  #
+  #   handle_all                      with: :my_handler_one
+  #   handle_with_matcher my_matcher, with: :my_handler_two
+  #
+  #   def my_handler_one(event)
+  #     # do_something
   #   end
   #
-  # You can use your custom autodiscover strategy:
+  #   def my_handler_two(event)
+  #     # do_something_else
+  #   end
+  # end
+  # ```
   #
-  # @example
-  #   class MySubscriber
-  #     include Omnes::Subscriber[
-  #       autodiscover: true,
-  #       autodiscover_strategy: ->(event_name) { event_name }
-  #     ]
+  # Another option is to let the event handlers be automatically discovered. You
+  # need to enable the `autodiscover` feature and prefix the event name with
+  # `on_` for your handler name.
   #
-  #     # It'll match foo event
-  #     def foo(event)
-  #       # do_something
-  #     end
+  # ```
+  # class MySubscriber
+  #   include Omnes::Subscriber[
+  #     autodiscover: true
+  #   ]
+  #
+  #   def on_foo(event)
+  #     # do_something
+  #   end
+  # end
+  # ```
+  #
+  # If you prefer, you can make `autodiscover` on by default:
+  #
+  # ```
+  # Omnes.config.subscriber.autodiscover = true
+  # ```
+  #
+  # You can specify your own autodiscover strategy. It must be something
+  # callable, transforming the event name into the handler name.
+  #
+  # ```
+  # AUTODISCOVER_STRATEGY = ->(event_name) { event_name }
+  #
+  # class MySubscriber
+  #   include Omnes::Subscriber[
+  #     autodiscover: true,
+  #     autodiscover_strategy: AUTODISCOVER_STRATEGY
+  #   ]
+  #
+  #   def foo(event)
+  #     # do_something
+  #   end
+  # end
+  # ```
+  # You're not limited to using method names as event handlers. You can create
+  # your own adapters from the subscriber instance context.
+  #
+  # ```
+  # ADAPTER = lambda do |instance, event|
+  #   event.foo? ? instance.foo_true(event) : instance.foo_false(event)
+  # end
+  #
+  # class MySubscriber
+  #   include Omnes::Subscriber
+  #
+  #   handle :my_event, with: ADAPTER
+  #
+  #   def foo_true(event)
+  #     # do_something
   #   end
   #
-  # You can also make autodiscover on by default:
-  #
-  # @example
-  #   Omnes::Subscriber.config.autodiscover = true
-  #
-  # 2. Use the `handle` class method to subscribe a method to a single event.
-  #
-  # @example
-  #   require 'omnes/subscriber'
-  #
-  #   class MySubscriber
-  #     include Omnes::Subscriber
-  #
-  #     handle :foo, with: :my_method
-  #
-  #     def my_method(event)
-  #       # do_something
-  #     end
+  #   def foo_false(event)
+  #     # do_something_else
   #   end
+  # end
+  # ```
   #
-  # 3. Use the `handle_all` class method to subscribe a method to all events.
+  # Subscriber adapters can be leveraged to build integrations with background
+  # job libraries. See {Omnes::Subscriber::Adapter} for what comes shipped with
+  # the library.
   #
-  # @example
-  #   require 'omnes/subscriber'
+  # Once you've defined the event handlers, you can subscribe to a {Omnes::Bus}
+  # instance:
   #
-  #   class MySubscriber
-  #     include Omnes::Subscriber
+  # ```
+  # MySubscriber.new.subscribe_to(bus)
+  # ```
   #
-  #     handle_all with: :my_method
-  #
-  #     def my_method(event)
-  #       # do_something
-  #     end
-  #   end
-  #
-  # 4. Use the `handle_with_matcher` class method to subscribe with a custom
-  # matcher (see {Omnes::Bus#subscribe_with_matcher}
-  #
-  # @example
-  #   require 'omnes/subscriber'
-  #
-  #   class MySubscriber
-  #     include Omnes::Subscriber
-  #
-  #     handle_with_matcher my_matcher, with: :my_method
-  #
-  #     def my_method(event)
-  #       # do_something
-  #     end
-  #   end
-  #
-  # 5. Use whatever callback builder you want instead in the `with` parameter
-  #
-  # @example
-  #   require 'omnes/subscriber'
-  #
-  #   class MySubscriber
-  #     include Omnes::Subscriber
-  #
-  #     handle :foo, with: lambda do |instance|
-  #       instance.do_something
-  #
-  #       instance.method(:my_method)
-  #     end
-  #
-  #     def my_method(event)
-  #       # do_something
-  #     end
-  #   end
-  #
-  # All different ways can be used at the same time.
-  #
-  # You can call `#subscribe_to` on the instance to activate the subscriptions:
-  #
-  # @example
-  #   require 'omnes/bus'
-  #
-  #   bus = Omnes::Bus.new
-  #   bus.register(:foo)
-  #   MySubscriber.new.subscribe_to(bus)
-  #
-  # Nuances to be took into account:
-  #
-  # - You can subscribe a method to different events.
-  # - You can subscribe different methods to the same event.
-  # - You can't subscribe the same method to the same event more than once.
-  # - You can't subscribe private methods.
-  # - You can subscribe different instances to the bus
-  # - You can subscribe the same instance to different buses
-  # - You can't subscribe the same instance to the same bus more than once
+  # Notice that a subscriber instance can only be subscribed once to the same
+  # bus. However, you can subscribe distinct instances to the same bus or the
+  # same instance to different buses.
   module Subscriber
     extend Dry::Configurable
 
@@ -144,10 +133,15 @@ module Omnes
 
     # Includes with options
     #
-    # Use regular `include Omnes::Subscriber` in case you want to use defaults:
+    # ```
+    # include Omnes::Subscriber[autodiscover: true]
+    # ```
     #
-    # @example
-    #   include Omnes::Subscriber[autodiscover_strategy: my_strategy]
+    # Use regular `include Omnes::Subscriber` in case you want to use the
+    # defaults (which can be changed through configuration).
+    #
+    # @param autodiscover [Boolean]
+    # @param autodiscover_strategy [#call]
     def self.[](autodiscover: config.autodiscover, autodiscover_strategy: config.autodiscover_strategy)
       Module.new(autodiscover_strategy: autodiscover ? autodiscover_strategy : nil)
     end
@@ -174,31 +168,31 @@ module Omnes
       end
     end
 
-    # Included instance methods
+    # Instance methods included in a {Omnes::Subscriber}
     module InstanceMethods
-      # Subscribes defined & autodiscovered handlers to a bus
+      # Subscribes event handlers to a bus
       #
       # @param bus [Omnes::Bus]
       #
       # @return [Omnes::Subscriber::Subscribers]
       #
       # @raise [Omnes::Subscriber::UnknownMethodSubscriptionAttemptError] when
-      # subscribing a method that doesn't exist
+      #   subscribing a method that doesn't exist
       # @raise [Omnes::Subscriber::PrivateMethodSubscriptionAttemptError] when
-      # trying to subscribe a method that is private
+      #   trying to subscribe a method that is private
       # @raise [Omnes::Subscriber::DuplicateSubscriptionAttemptError] when
-      # trying to subscribe to the same event with the same method more than once
+      #   trying to subscribe to the same event with the same method more than once
       def subscribe_to(bus)
         self.class.instance_variable_get(:@_state).public_send(:call, bus, self)
       end
     end
 
-    # Included DSL
+    # Included DSL methods for a {Omnes::Subscriber}
     module ClassMethods
-      # Match a single event name to a method
+      # Match a single event name
       #
       # @param event_name [Symbol]
-      # @param with [Symbol] Public method in the class
+      # @param with [Symbol, #call] Public method in the class or an adapter
       def handle(event_name, with:)
         @_mutex.synchronize do
           @_state.add_subscription_definition do |bus|
@@ -208,9 +202,9 @@ module Omnes
         end
       end
 
-      # Handles all events with a method
+      # Handles all events
       #
-      # @param with [Symbol] Public method in the class
+      # @param with [Symbol, #call] Public method in the class or an adapter
       def handle_all(with:)
         @_mutex.synchronize do
           @_state.add_subscription_definition do |_bus|
@@ -219,10 +213,10 @@ module Omnes
         end
       end
 
-      # Handles events with a custom matcher using a method
+      # Handles events with a custom matcher
       #
       # @param matcher [#call]
-      # @param with [Symbol] Public method in the class
+      # @param with [Symbol, #call] Public method in the class or an adapter
       def handle_with_matcher(matcher, with:)
         @_mutex.synchronize do
           @_state.add_subscription_definition do |_bus|

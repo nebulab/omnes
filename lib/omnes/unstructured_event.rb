@@ -4,8 +4,7 @@ module Omnes
   # Event with a payload defined at publication time
   #
   # An instance of it is automatically created on {Omnes::Bus#publish} when a
-  # name and payload are given. That's what is yielded to all matching
-  # subscriptions (see {Omnes::Bus#subscribe}.
+  # name and payload are given.
   #
   # @example
   #   bus = Omnes::Bus.new
@@ -13,10 +12,7 @@ module Omnes
   #   bus.subscribe(:foo) do |event|
   #     puts event[:bar]
   #   end
-  #   bus.publish(:foo, bar: 'bar')
-  #
-  # As any other event, it can be accessed through the returned value in
-  # {Omnes::Bus#publish}.
+  #   bus.publish(:foo, bar: 'bar') # it'll generate an instance of this class
   class UnstructuredEvent
     # Name of the event
     #
@@ -37,7 +33,7 @@ module Omnes
 
     # Delegates to {#payload}
     #
-    # @param key [Symbol]
+    # @param key [Any]
     #
     # @return Any
     def [](key)

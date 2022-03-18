@@ -4,8 +4,7 @@ require "omnes/errors"
 
 module Omnes
   module Subscriber
-    # Raised when calling {Omnes::Subscriber#subscribe_to} multiple times for
-    # the same instance/bus
+    # Raised when subscribing the same subscriber instance to the same bus twice
     class MultipleSubscriberSubscriptionAttemptError < Omnes::Error
       # @api private
       def initialize

@@ -5,44 +5,44 @@ require "dry/configurable"
 module Omnes
   # Abstract class for events
   #
-  # Any instance of a class inheriting from this one can be used as an event on
-  # {Omnes::Bus#publish}. It's yielded to all matching subscriptions (see
-  # {Omnes::Bus#subscribe}.
+  # Any instance of a class inheriting from this one can be used as a published
+  # event (see {Omnes::Bus#publish}).
   #
-  # @example
-  #   class MyEvent < Omnes::Event
-  #     attr_reader :event
+  # ```
+  # class MyEvent < Omnes::Event
+  #   attr_reader :event
   #
-  #     def initialize(id:)
-  #       @id = id
-  #     end
+  #   def initialize(id:)
+  #     @id = id
   #   end
+  # end
   #
-  #   bus = Omnes::Bus.new
-  #   bus.register(:my_event)
-  #   bus.subscribe(:my_event) do |event|
-  #     puts event.id
-  #   end
-  #   bus.publish(MyEvent.new(1))
-  #
-  # It can be accessed through the returned value in {Omnes::Bus#publish}.
-  #
-  # Custom classes an also be used as events. The only requirements is that
-  # they respond to a `#name` method, as this one does.
+  # bus = Omnes::Bus.new
+  # bus.register(:my_event)
+  # bus.subscribe(:my_event) do |event|
+  #   puts event.id
+  # end
+  # bus.publish(MyEvent.new(1))
+  # ```
   class Event
     extend Dry::Configurable
 
-    # Default name builer for event classes.
+    # Generates the event name for an event instance
     #
     # It returns the underscored class name. E.g:
     #
-    # Foo -> :foo
-    # FooBar -> :foo_bar
-    # FBar -> :f_bar
-    # Foo::Bar -> :foo_bar
+    # - Foo -> `:foo`
+    # - FooBar -> `:foo_bar`
+    # - FBar -> `:f_bar`
+    # - Foo::Bar -> `:foo_bar`
     #
-    # You can change it with `Omnes::Event.config.name_builder =
-    # my_name_builder`.
+    # You can also use your custom name builder. It needs to be something
+    # callable taking the instance as argument and returning a {Symbol}:
+    #
+    # ```
+    # my_name_builder = ->(instance) { instance.class.name.to_sym }
+    # Omnes.config.event.name_builder = my_name_builder
+    # ```
     #
     # @return [Symbol]
     DEFAULT_NAME_BUILDER = lambda do |instance|
@@ -57,8 +57,9 @@ module Omnes
 
     # Event name
     #
-    # Use it to register or subscribe to the event.
+    # @return [Symbol]
     #
+    # @see DEFAULT_NAME_BUILDER
     def name
       self.class.config.name_builder.(self)
     end

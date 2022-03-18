@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "omnes/subscription"
 require "omnes/subscriber/adapter"
 require "omnes/subscriber/errors"
+require "omnes/subscription"
 
 module Omnes
   module Subscriber

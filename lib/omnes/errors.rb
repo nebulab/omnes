@@ -3,7 +3,7 @@
 module Omnes
   class Error < StandardError; end
 
-  # Raised when event is not known
+  # Raised when an event name is not known
   class UnknownEventError < Error
     attr_reader :event_name, :known_events
 
@@ -56,7 +56,7 @@ module Omnes
     end
   end
 
-  # Raised when trying to register an event a second time
+  # Raised when trying to register the same event name a second time
   class AlreadyRegisteredEventError < Error
     attr_reader :event_name, :registration
 

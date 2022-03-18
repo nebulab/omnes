@@ -6,6 +6,18 @@ module Omnes
   module Subscriber
     module Adapter
       # Builds a callback from a method of the instance
+      #
+      # You can use instance of this class as the adapter:
+      #
+      # ```ruby
+      # handle :foo, with: Adapter::Method.new(:foo)
+      # ```
+      #
+      # However, you can short-circuit with a {Symbol}.
+      #
+      # ```ruby
+      # handle :foo, with: :foo
+      # ```
       class Method
         attr_reader :name
 
@@ -13,11 +25,14 @@ module Omnes
           @name = name
         end
 
+        # @api private
         def call(instance)
           check_method(instance)
 
           ->(event) { instance.method(name).(event) }
         end
+
+        private
 
         def check_method(instance)
           raise PrivateMethodSubscriptionAttemptError.new(method_name: name) if instance.private_methods.include?(name)

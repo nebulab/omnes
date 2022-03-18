@@ -9,9 +9,9 @@ module Omnes
   # This class is useful mainly for debugging and logging purposes. An
   # instance of it is returned on {Omnes::Bus#publish}.
   class Publication
-    # Fired event
+    # Published event
     #
-    # @return [Omnes::Event]
+    # @return [#name]
     attr_reader :event
 
     # Subscription executions that the publication originated
