@@ -80,7 +80,7 @@ RSpec.shared_examples "bus" do
     end
 
     it "can publish an event instance inheriting from Omnes::Event, yielding it to the subscription" do
-      Event = Class.new(Omnes::Event) do
+      FooEvent = Class.new(Omnes::Event) do
         def bar
           :bar
         end
@@ -89,14 +89,14 @@ RSpec.shared_examples "bus" do
         attr_accessor :box
       end.new
       bus = subject.new
-      bus.register(:event)
-      bus.subscribe(:event) { |event| dummy.box = event.bar }
+      bus.register(:foo)
+      bus.subscribe(:foo) { |event| dummy.box = event.bar }
 
-      bus.publish Event.new
+      bus.publish FooEvent.new
 
       expect(dummy.box).to eq(:bar)
     ensure
-      Object.send(:remove_const, :Event)
+      Object.send(:remove_const, :FooEvent)
     end
 
     it "can publish an event instance with a name method, yielding it to the subscription" do

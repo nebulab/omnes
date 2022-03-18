@@ -57,5 +57,13 @@ RSpec.describe Omnes::Event do
     ensure
       Object.send(:remove_const, :FBar)
     end
+
+    it "removes an Event suffix if present" do
+      FooEvent = Class.new(Omnes::Event)
+
+      expect(FooEvent.new.name).to be(:foo)
+    ensure
+      Object.send(:remove_const, :FooEvent)
+    end
   end
 end

@@ -29,9 +29,11 @@ module Omnes
 
     # Generates the event name for an event instance
     #
-    # It returns the underscored class name. E.g:
+    # It returns the underscored class name, with an `Event` suffix removed if
+    # present. E.g:
     #
     # - Foo -> `:foo`
+    # - FooEvent -> `:foo`
     # - FooBar -> `:foo_bar`
     # - FBar -> `:f_bar`
     # - Foo::Bar -> `:foo_bar`
@@ -47,6 +49,7 @@ module Omnes
     # @return [Symbol]
     DEFAULT_NAME_BUILDER = lambda do |instance|
       instance.class.name
+              .chomp("Event")
               .gsub(/([[:alpha:]])([[:upper:]])/, '\1_\2')
               .gsub("::", "_")
               .downcase

@@ -76,7 +76,7 @@ You can also publish an instance of a class descending from
 OOTB event name generated based on the class name.
 
 ```ruby
-class OrderCreated < Omnes::Event
+class OrderCreatedEvent < Omnes::Event
   attr_reader :number, :user_email
   
   def initialize(number:, user_email:)
@@ -85,16 +85,17 @@ class OrderCreated < Omnes::Event
   end
 end
 
-event = OrderCreated.new(number: order.number, user_email: user.email)
+event = OrderCreatedEvent.new(number: order.number, user_email: user.email)
 bus.publish(event)
 ```
 
-By default, an event name instance equals the event class name downcased and
-underscored (`:order_created` in the previous example). However, you can
-configure your own name generator based on the event instance:
+By default, an event name instance equals the event class name downcased,
+underscored and with the `Event` suffix removed if present (`:order_created` in
+the previous example). However, you can configure your own name generator based
+on the event instance:
 
 ```ruby
-event_name_as_class = ->(event) { event.class.name.to_sym } # :OrderCreated in the example
+event_name_as_class = ->(event) { event.class.name.to_sym } # :OrderCreatedEvent in the example
 Omnes.config.event.name_builder = event_name_as_class
 ```
 
