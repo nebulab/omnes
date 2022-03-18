@@ -29,7 +29,7 @@ module Omnes
       # ```
       #
       # You can delay the callback execution from the publication time with the
-      # {.it} method (analogous to {Sidekiq::Job.perform_in}).
+      # {.in} method (analogous to {Sidekiq::Job.perform_in}).
       #
       # @example
       #   handle :my_event, with: Adapter::Sidekiq.in(60)

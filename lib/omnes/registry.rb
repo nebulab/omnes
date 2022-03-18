@@ -24,7 +24,8 @@ module Omnes
       end
     end
 
-    # @api private
+    # @!attribute [r] registrations
+    #   @return [Array<Omnes::Registry::Registration>]
     attr_reader :registrations
 
     def initialize(registrations: [])
