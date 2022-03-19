@@ -71,12 +71,14 @@ features, such as event persistence, can't be reliably built on top of them.
 
 2. Instance-backed events
 
-You can also publish an instance of a class descending from
+You can also publish an instance of a class including
 [`Omnes::Event`](lib/omnes/event.rb). The only fancy thing it provides is an
 OOTB event name generated based on the class name.
 
 ```ruby
-class OrderCreatedEvent < Omnes::Event
+class OrderCreatedEvent
+  include Omnes::Event
+
   attr_reader :number, :user_email
   
   def initialize(number:, user_email:)

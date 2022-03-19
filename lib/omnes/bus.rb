@@ -42,12 +42,14 @@ module Omnes
   # other features, such as event persistence, can't be reliably built on top of
   # them.
   #
-  # You can also publish an instance of a class descending from {Omnes::Event}.
-  # The only fancy thing it provides is an OOTB event name generated based on
-  # the class name. See {Omnes::Event} for details.
+  # You can also publish an instance of a class including {Omnes::Event}.  The
+  # only fancy thing it provides is an OOTB event name generated based on the
+  # class name. See {Omnes::Event} for details.
   #
   # ```
-  # class Foo < Omnes::Event
+  # class Foo
+  #   include Omnes::Event
+  #
   #   attr_reader :bar
   #
   #   def initialize

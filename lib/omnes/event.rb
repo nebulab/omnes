@@ -3,13 +3,15 @@
 require "dry/configurable"
 
 module Omnes
-  # Abstract class for events
+  # Event mixin for custom classes
   #
-  # Any instance of a class inheriting from this one can be used as a published
-  # event (see {Omnes::Bus#publish}).
+  # Any instance of a class including this one can be used as a published event
+  # (see {Omnes::Bus#publish}).
   #
   # ```
-  # class MyEvent < Omnes::Event
+  # class MyEvent
+  #   include Omnes::Event
+  #
   #   attr_reader :event
   #
   #   def initialize(id:)
@@ -24,7 +26,7 @@ module Omnes
   # end
   # bus.publish(MyEvent.new(1))
   # ```
-  class Event
+  module Event
     extend Dry::Configurable
 
     # Generates the event name for an event instance
@@ -64,7 +66,7 @@ module Omnes
     #
     # @see DEFAULT_NAME_BUILDER
     def name
-      self.class.config.name_builder.(self)
+      Omnes::Event.config.name_builder.(self)
     end
   end
 end

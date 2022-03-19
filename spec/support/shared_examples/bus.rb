@@ -79,8 +79,10 @@ RSpec.shared_examples "bus" do
       expect(dummy.box).to eq("foo")
     end
 
-    it "can publish an event instance inheriting from Omnes::Event, yielding it to the subscription" do
-      FooEvent = Class.new(Omnes::Event) do
+    it "can publish an event instance including Omnes::Event, yielding it to the subscription" do
+      FooEvent = Class.new do
+        include Omnes::Event
+
         def bar
           :bar
         end

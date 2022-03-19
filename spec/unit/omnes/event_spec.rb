@@ -5,7 +5,7 @@ require "omnes/event"
 RSpec.describe Omnes::Event do
   describe "#name" do
     it "returns a symbol" do
-      Foo = Class.new(Omnes::Event)
+      Foo = Class.new.include(Omnes::Event)
 
       expect(Foo.new.name.is_a?(Symbol)).to be(true)
     ensure
@@ -13,7 +13,7 @@ RSpec.describe Omnes::Event do
     end
 
     it "returns class name downcased" do
-      Foo = Class.new(Omnes::Event)
+      Foo = Class.new.include(Omnes::Event)
 
       expect(Foo.new.name).to be(:foo)
     ensure
@@ -22,7 +22,7 @@ RSpec.describe Omnes::Event do
 
     it "replaces module separator with underscores" do
       module Foo
-        Bar = Class.new(Omnes::Event)
+        Bar = Class.new.include(Omnes::Event)
       end
 
       expect(Foo::Bar.new.name).to be(:foo_bar)
@@ -33,7 +33,7 @@ RSpec.describe Omnes::Event do
     it "replaces all module separators with underscores" do
       module Foo
         module Bar
-          Baz = Class.new(Omnes::Event)
+          Baz = Class.new.include(Omnes::Event)
         end
       end
 
@@ -43,7 +43,7 @@ RSpec.describe Omnes::Event do
     end
 
     it "adds an underscore before a capitalized character preceded by a lowercase char" do
-      FooBar = Class.new(Omnes::Event)
+      FooBar = Class.new.include(Omnes::Event)
 
       expect(FooBar.new.name).to be(:foo_bar)
     ensure
@@ -51,7 +51,7 @@ RSpec.describe Omnes::Event do
     end
 
     it "adds an underscore before a capitalized character preceded by an uppercase char" do
-      FBar = Class.new(Omnes::Event)
+      FBar = Class.new.include(Omnes::Event)
 
       expect(FBar.new.name).to be(:f_bar)
     ensure
@@ -59,7 +59,7 @@ RSpec.describe Omnes::Event do
     end
 
     it "removes an Event suffix if present" do
-      FooEvent = Class.new(Omnes::Event)
+      FooEvent = Class.new.include(Omnes::Event)
 
       expect(FooEvent.new.name).to be(:foo)
     ensure
