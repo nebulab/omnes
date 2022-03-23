@@ -57,7 +57,7 @@ RSpec.describe Omnes::Subscriber::Adapter::Sidekiq do
         FOO_TABLE[payload["id"]] = payload["attributes"]
       end
     end
-    event = Struct.new(:name, :id, :attributes).new(:create_foo, 1, { name: "foo" })
+    event = Struct.new(:omnes_event_name, :id, :attributes).new(:create_foo, 1, { name: "foo" })
     FOO_TABLE = {}
 
     bus.register(:create_foo)

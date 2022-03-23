@@ -101,9 +101,9 @@ RSpec.shared_examples "bus" do
       Object.send(:remove_const, :FooEvent)
     end
 
-    it "can publish an event instance with a name method, yielding it to the subscription" do
+    it "can publish an event instance with an omnes_event_name method, yielding it to the subscription" do
       my_event = Class.new do
-        def name
+        def omnes_event_name
           :foo
         end
 

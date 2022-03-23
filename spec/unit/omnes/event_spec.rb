@@ -3,11 +3,11 @@
 require "omnes/event"
 
 RSpec.describe Omnes::Event do
-  describe "#name" do
+  describe "#omnes_event_name" do
     it "returns a symbol" do
       Foo = Class.new.include(Omnes::Event)
 
-      expect(Foo.new.name.is_a?(Symbol)).to be(true)
+      expect(Foo.new.omnes_event_name.is_a?(Symbol)).to be(true)
     ensure
       Object.send(:remove_const, :Foo)
     end
@@ -15,7 +15,7 @@ RSpec.describe Omnes::Event do
     it "returns class name downcased" do
       Foo = Class.new.include(Omnes::Event)
 
-      expect(Foo.new.name).to be(:foo)
+      expect(Foo.new.omnes_event_name).to be(:foo)
     ensure
       Object.send(:remove_const, :Foo)
     end
@@ -25,7 +25,7 @@ RSpec.describe Omnes::Event do
         Bar = Class.new.include(Omnes::Event)
       end
 
-      expect(Foo::Bar.new.name).to be(:foo_bar)
+      expect(Foo::Bar.new.omnes_event_name).to be(:foo_bar)
     ensure
       Object.send(:remove_const, :Foo)
     end
@@ -37,7 +37,7 @@ RSpec.describe Omnes::Event do
         end
       end
 
-      expect(Foo::Bar::Baz.new.name).to be(:foo_bar_baz)
+      expect(Foo::Bar::Baz.new.omnes_event_name).to be(:foo_bar_baz)
     ensure
       Object.send(:remove_const, :Foo)
     end
@@ -45,7 +45,7 @@ RSpec.describe Omnes::Event do
     it "adds an underscore before a capitalized character preceded by a lowercase char" do
       FooBar = Class.new.include(Omnes::Event)
 
-      expect(FooBar.new.name).to be(:foo_bar)
+      expect(FooBar.new.omnes_event_name).to be(:foo_bar)
     ensure
       Object.send(:remove_const, :FooBar)
     end
@@ -53,7 +53,7 @@ RSpec.describe Omnes::Event do
     it "adds an underscore before a capitalized character preceded by an uppercase char" do
       FBar = Class.new.include(Omnes::Event)
 
-      expect(FBar.new.name).to be(:f_bar)
+      expect(FBar.new.omnes_event_name).to be(:f_bar)
     ensure
       Object.send(:remove_const, :FBar)
     end
@@ -61,7 +61,7 @@ RSpec.describe Omnes::Event do
     it "removes an Event suffix if present" do
       FooEvent = Class.new.include(Omnes::Event)
 
-      expect(FooEvent.new.name).to be(:foo)
+      expect(FooEvent.new.omnes_event_name).to be(:foo)
     ensure
       Object.send(:remove_const, :FooEvent)
     end

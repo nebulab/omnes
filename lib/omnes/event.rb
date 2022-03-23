@@ -65,7 +65,7 @@ module Omnes
     # @return [Symbol]
     #
     # @see DEFAULT_NAME_BUILDER
-    def name
+    def omnes_event_name
       Omnes::Event.config.name_builder.(self)
     end
   end

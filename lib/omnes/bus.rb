@@ -42,7 +42,7 @@ module Omnes
   # other features, such as event persistence, can't be reliably built on top of
   # them.
   #
-  # You can also publish an instance of a class including {Omnes::Event}.  The
+  # You can also publish an instance of a class including {Omnes::Event}. The
   # only fancy thing it provides is an OOTB event name generated based on the
   # class name. See {Omnes::Event} for details.
   #
@@ -109,7 +109,7 @@ module Omnes
     def self.EventType(value, **payload)
       case value
       when Symbol
-        UnstructuredEvent.new(name: value, payload: payload)
+        UnstructuredEvent.new(omnes_event_name: value, payload: payload)
       else
         value
       end
@@ -167,7 +167,7 @@ module Omnes
     def publish(event, caller_location: caller_locations(cal_loc_start)[0], **payload)
       publication_time = Time.now.utc
       event = self.class.EventType(event, **payload)
-      registry.check_event_name(event.name)
+      registry.check_event_name(event.omnes_event_name)
       executions = execute_subscriptions_for_event(event)
 
       Publication.new(

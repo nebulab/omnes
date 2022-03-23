@@ -17,7 +17,7 @@ module Omnes
     # Name of the event
     #
     # @return [Symbol]
-    attr_reader :name
+    attr_reader :omnes_event_name
 
     # Information made available to the matching subscriptions
     #
@@ -25,9 +25,9 @@ module Omnes
     attr_reader :payload
 
     # @api private
-    def initialize(payload:, name:)
+    def initialize(payload:, omnes_event_name:)
       @payload = payload
-      @name = name
+      @omnes_event_name = omnes_event_name
     end
 
     # Delegates to {#payload}

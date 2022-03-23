@@ -18,7 +18,7 @@ module Omnes
   # ```
   class Subscription
     SINGLE_EVENT_MATCHER = lambda do |subscribed, candidate|
-      subscribed == candidate.name
+      subscribed == candidate.omnes_event_name
     end
 
     ALL_EVENTS_MATCHER = ->(_candidate) { true }

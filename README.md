@@ -73,7 +73,8 @@ features, such as event persistence, can't be reliably built on top of them.
 
 You can also publish an instance of a class including
 [`Omnes::Event`](lib/omnes/event.rb). The only fancy thing it provides is an
-OOTB event name generated based on the class name.
+OOTB event name generated based on the class name. In fact, you can use
+anything responding to `#omnes_event_name`.
 
 ```ruby
 class OrderCreatedEvent
