@@ -9,6 +9,12 @@ RSpec.describe Omnes do
 
   include_examples "bus"
 
+  it "doesn't share buses between instances" do
+    klass = Class.new.include(described_class)
+
+    expect(klass.new.omnes_bus).not_to be(klass.new.omnes_bus)
+  end
+
   describe ".config.event" do
     it "returns Omnes::Event.config" do
       expect(

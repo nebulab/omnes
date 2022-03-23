@@ -35,14 +35,14 @@ require "omnes/version"
 module Omnes
   # Shortcut to access the configuration for different Omnes components
   #
+  # TODO: Make automation for it
+  #
   # @return [Omnes::Config]
   def self.config
     Config
   end
 
   # Wrapper for the configuration of Omnes components
-  #
-  # TODO: Make automation for it
   module Config
     # {Omnes::Subscriber} configuration
     #
@@ -73,8 +73,7 @@ module Omnes
 
   # @api private
   def self.included(klass)
-    bus = Bus.new(cal_loc_start: 2)
-    klass.define_method(:omnes_bus) { bus }
+    klass.define_method(:omnes_bus) { @omnes_bus ||= Bus.new(cal_loc_start: 2) }
     Bus.instance_methods(false).each do |method|
       klass.define_method(method) do |*args, **kwargs, &block|
         omnes_bus.send(method, *args, **kwargs, &block)
