@@ -523,6 +523,9 @@ bus.publish(:order_deleted, number: order.number) # `deletion_subscription` will
 
 Remember that the array of created subscriptions is returned on `Omnes::Subscriber#subscribe_to`.
 
+There's also a specialized `Omnes::Bus#performing_nothing` method that runs no
+subscriptions for the duration of the block.
+
 ## Recipes
 
 ### Rails

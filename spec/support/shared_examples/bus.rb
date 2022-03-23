@@ -434,4 +434,19 @@ RSpec.shared_examples "bus" do
       end.to raise_error(Omnes::UnknownSubscriptionError)
     end
   end
+
+  describe "#performing_nothing" do
+    it "doesn't run any subcriptions" do
+      bus = subject.new
+      bus.register(:foo)
+      dummy = counter.new
+      bus.subscribe(:foo) { dummy.inc }
+
+      bus.performing_nothing do
+        bus.publish(:foo)
+      end
+
+      expect(dummy.count).to be(0)
+    end
+  end
 end

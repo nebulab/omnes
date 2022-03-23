@@ -250,6 +250,13 @@ module Omnes
       @subscriptions = all_subscriptions
     end
 
+    # Specialized version of {#performing_only} with no subscriptions
+    #
+    # @see #performing_only
+    def performing_nothing(&block)
+      performing_only(&block)
+    end
+
     private
 
     def execute_subscriptions_for_event(event)
