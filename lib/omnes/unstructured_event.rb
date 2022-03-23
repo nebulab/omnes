@@ -25,10 +25,9 @@ module Omnes
     attr_reader :payload
 
     # @api private
-    def initialize(payload:, name:, **kwargs)
+    def initialize(payload:, name:)
       @payload = payload
       @name = name
-      super(**kwargs)
     end
 
     # Delegates to {#payload}
