@@ -149,9 +149,7 @@ module Omnes
     #
     # @overload publish(event_name, caller_location:, **payload)
     #   @param event_name [Symbol] Name for the generated
-    #     {Omnes::UnstructuredEvent} event.  {Omnes::UnstrUnstructuredEvent}
-    #     published with the event, meant to be consumed by matching
-    #     subscriptions.
+    #     {Omnes::UnstructuredEvent} event.
     #   @param **payload [Hash] Payload for the generated
     #     {Omnes::UnstrUnstructuredEvent}
     #
