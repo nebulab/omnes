@@ -32,4 +32,12 @@ RSpec.describe Omnes do
       ).to be(Omnes::Subscriber::Adapter::Sidekiq.config)
     end
   end
+
+  describe ".config.subscriber.adapter.active_job" do
+    it "returns Omnes::Subscriber::Adapter::ActiveJob.config" do
+      expect(
+        described_class.config.subscriber.adapter.active_job
+      ).to be(Omnes::Subscriber::Adapter::ActiveJob.config)
+    end
+  end
 end

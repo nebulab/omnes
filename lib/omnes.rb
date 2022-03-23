@@ -54,6 +54,10 @@ module Omnes
             def self.sidekiq
               Omnes::Subscriber::Adapter::Sidekiq.config
             end
+
+            def self.active_job
+              Omnes::Subscriber::Adapter::ActiveJob.config
+            end
           end
         end
       end

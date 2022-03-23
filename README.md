@@ -351,9 +351,8 @@ The ActiveJob adapter allows creating a subscription to be processed as an
 [ActiveJob](https://edgeguides.rubyonrails.org/active_job_basics.html)
 background job.
 
-Events consumed by the ActiveJob adapter need to respond to a `payload` method,
-which is what is given to the `#perform` instance method. You need to make sure
-that's something serializable according to ActiveJob's constraints.
+ActiveJob requires that the argument passed to `#perform` is serializable. By
+default, the result of calling `#payload` in the event is taken.
 
 ```ruby
 class OrderCreationEmailSubscriber < ActiveJob
@@ -370,6 +369,20 @@ bus = Omnes::Bus.new
 bus.register(:order_created)
 OrderCreationEmailSubscriber.new.subscribe_to(bus)
 bus.publish(:order_created, "number" => order.number, "user_email" => user.email)
+```
+
+However, you can configure how the event is serialized thanks to the
+`serializer:` option. It needs to be something callable taking the event as
+argument:
+
+```ruby
+handle :order_created, with: Adapter::ActiveJob[serializer: :serialized_payload.to_proc]
+```
+
+You can also globally configure the default serializer:
+
+```ruby
+Omnes.config.subscriber.adapter.active_job.serializer = :serialized_payload.to_proc
 ```
 
 #### Custom adapters

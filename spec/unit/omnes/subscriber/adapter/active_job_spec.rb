@@ -9,49 +9,68 @@ require "omnes/subscriber"
 RSpec.describe Omnes::Subscriber::Adapter::ActiveJob do
   include ActiveJob::TestHelper
 
-  describe "#call" do
-    it "calls `perform_later` class method with the event payload" do
-      event = Struct.new(:payload).new("foo")
-      instance = Class.new do
-        def self.perform_later(event)
-          "#{event} called"
-        end
-      end.new
+  let(:bus) { Omnes::Bus.new }
 
-      expect(described_class.(instance, event)).to eq("foo called")
-    end
+  before do
+    ActiveJob::Base.queue_adapter = :test
+    ActiveJob::Base.logger = Logger.new(nil)
   end
 
-  describe "Integration" do
-    let(:bus) { Omnes::Bus.new }
+  it "performs the job async passing the event's payload" do
+    class Subscriber < ActiveJob::Base
+      include Omnes::Subscriber
 
-    before do
-      ActiveJob::Base.queue_adapter = :test
-      ActiveJob::Base.logger = Logger.new(nil)
-    end
+      handle :create_foo, with: Adapter::ActiveJob
 
-    it "performs the job async passing the event's payload" do
-      class Subscriber < ActiveJob::Base
-        include Omnes::Subscriber
-
-        handle :create_foo, with: Adapter::ActiveJob
-
-        def perform(payload)
-          FOO_TABLE[payload["id"]] = payload["attributes"]
-        end
+      def perform(payload)
+        FOO_TABLE[payload["id"]] = payload["attributes"]
       end
-      FOO_TABLE = {}
-
-      bus.register(:create_foo)
-      Subscriber.new.subscribe_to(bus)
-
-      bus.publish(:create_foo, "id" => 1, "attributes" => { "name" => "foo" })
-      perform_enqueued_jobs
-
-      expect(FOO_TABLE[1]).to eq("name" => "foo")
-    ensure
-      Object.send(:remove_const, :Subscriber)
-      Object.send(:remove_const, :FOO_TABLE)
     end
+    FOO_TABLE = {}
+
+    bus.register(:create_foo)
+    Subscriber.new.subscribe_to(bus)
+
+    bus.publish(:create_foo, "id" => 1, "attributes" => { "name" => "foo" })
+    perform_enqueued_jobs
+
+    expect(FOO_TABLE[1]).to eq("name" => "foo")
+  ensure
+    Object.send(:remove_const, :Subscriber)
+    Object.send(:remove_const, :FOO_TABLE)
+  end
+
+  it "can specify how to serialize the event" do
+    class Subscriber < ActiveJob::Base
+      include Omnes::Subscriber
+
+      EVENT_SERIALIZER = lambda do |event|
+        {
+          "id" => event.id,
+          "attributes" => {
+            "name" => event.attributes[:name]
+          }
+        }
+      end
+
+      handle :create_foo, with: Adapter::ActiveJob[serializer: EVENT_SERIALIZER]
+
+      def perform(payload)
+        FOO_TABLE[payload["id"]] = payload["attributes"]
+      end
+    end
+    event = Struct.new(:name, :id, :attributes).new(:create_foo, 1, { name: "foo" })
+    FOO_TABLE = {}
+
+    bus.register(:create_foo)
+    Subscriber.new.subscribe_to(bus)
+
+    bus.publish(event)
+    perform_enqueued_jobs
+
+    expect(FOO_TABLE[1]).to eq("name" => "foo")
+  ensure
+    Object.send(:remove_const, :Subscriber)
+    Object.send(:remove_const, :FOO_TABLE)
   end
 end
