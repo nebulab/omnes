@@ -140,7 +140,7 @@ RSpec.shared_examples "bus" do
 
       publication = bus.publish :foo
 
-      expect(publication.publication_time).not_to be(nil)
+      expect(publication.time).not_to be(nil)
     end
 
     it "adds the published event to the publication result object" do

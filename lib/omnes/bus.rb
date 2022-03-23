@@ -174,7 +174,7 @@ module Omnes
         event: event,
         executions: executions,
         caller_location: caller_location,
-        publication_time: publication_time
+        time: publication_time
       )
     end
 

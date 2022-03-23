@@ -29,14 +29,14 @@ module Omnes
     # Time of execution
     #
     # @return [Time]
-    attr_reader :execution_time
+    attr_reader :time
 
     # @private
-    def initialize(subscription:, result:, benchmark:, execution_time: Time.now.utc)
+    def initialize(subscription:, result:, benchmark:, time: Time.now.utc)
       @subscription = subscription
       @result = result
       @benchmark = benchmark
-      @execution_time = execution_time
+      @time = time
     end
   end
 end

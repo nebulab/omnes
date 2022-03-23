@@ -30,14 +30,14 @@ module Omnes
     # Time of the event publication
     #
     # @return [Time]
-    attr_reader :publication_time
+    attr_reader :time
 
     # @api private
-    def initialize(event:, executions:, caller_location:, publication_time:)
+    def initialize(event:, executions:, caller_location:, time:)
       @event = event
       @executions = executions
       @caller_location = caller_location
-      @publication_time = publication_time
+      @time = time
     end
   end
 end

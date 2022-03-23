@@ -479,7 +479,7 @@ attributes that allow observing what happened:
 
 - `#event` contains the event instance that has been published.
 - `#caller_location` refers to the publication caller.
-- `#publication_time` is the time stamp for the publication.
+- `#time` is the time stamp for the publication.
 - `#executions` contains an array of
   `Omnes::Execution`(lib/omnes/execution.rb). Read more below.
   
@@ -489,7 +489,7 @@ the following attributes:
 - `#subscription` is an instance of [`Omnes::Subscription`](lib/omnes/subscripiton.rb).
 - `#result` contains the result of the execution.
 - `#benchmark` of the operation.
-- `#execution_time` is the time where the execution started.
+- `#time` is the time where the execution started.
 
 ## Testing
 
