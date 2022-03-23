@@ -8,17 +8,22 @@ Gem::Specification.new do |spec|
   spec.authors = ["Marc Busqué"]
   spec.email = ["marc@lamarciana.com"]
 
-  spec.summary = "Write a short summary, because RubyGems requires one."
-  spec.description = "Write a longer description or delete this line."
-  spec.homepage = "https://google.com"
+  spec.summary = "Pub/Sub for ruby"
+  spec.description = <<~MSG
+    Omnes is a Ruby library implementing the publish-subscribe pattern. This
+    pattern allows senders of messages to be decoupled from their receivers. An
+    Event Bus acts as a middleman where events are published while interested
+    parties can subscribe to them.
+  MSG
+  spec.homepage = "https://github.com/nebulab/omnes"
   spec.license = "MIT"
   spec.required_ruby_version = Gem::Requirement.new(">= 2.7.0")
 
-  spec.metadata["allowed_push_host"] = "http://mygemserver.com"
+  spec.metadata["allowed_push_host"] = "https://rubygems.org"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://google.com"
-  spec.metadata["changelog_uri"] = "https://google.com"
+  spec.metadata["source_code_uri"] = spec.homepage
+  spec.metadata["changelog_uri"] = "#{spec.homepage}/CHANGELOG.md"
 
   spec.metadata["rubygems_mfa_required"] = "true"
 

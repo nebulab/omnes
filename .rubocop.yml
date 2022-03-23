@@ -6,6 +6,7 @@ AllCops:
 Metrics/BlockLength:
   Exclude:
     - 'spec/**/*'
+    - omnes.gemspec
 
 Style/AccessModifierDeclarations:
   Exclude:
