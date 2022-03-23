@@ -446,7 +446,7 @@ When you create a subscription, an instance of
 debug some behavior.
 
 ```ruby
-subscription = bus.subscribe(:create_order, OrderCreationEmailSubscription.new)
+subscription = bus.subscribe(:order_created, OrderCreationEmailSubscription.new)
 bus.unsubscribe(subscription)
 ```
 
@@ -499,18 +499,29 @@ operation at the integration level. Example:
 
 ```ruby
 if # test environment
-  bus.subscribe(OrderCreationEmailSubscriber.new(service: MockService.new)
+  bus.subscribe(:order_created, OrderCreationEmailSubscriber.new(service: MockService.new)
 else
-  bus.subscribe(OrderCreationEmailSubscriber.new)
+  bus.subscribe(:order_created, OrderCreationEmailSubscriber.new)
 end
 ```
 
 Then, at the unit level, you can test your subscribers as any other class.
 
-However, there's also a handy `Omnes::Bus#with_subscriptions` method that
-returns a copy of the current bus but with only the given array of
-`Omnes::Subscription` instances. You can use it to substitute a globally
-available bus while you're testing a given component.
+However, there's also a handy `Omnes::Bus#performing_only` method that allows
+running a code block with only a selection of subscriptions as potential
+callbacks for published events.
+
+```ruby
+creation_subscription = bus.subscribe(:order_created, OrderCreationEmailSubscriber.new)
+deletion_subscription = bus.subscribe(:order_deleted, OrderDeletionSubscriber.new)
+bus.performing_only(creation_subscription) do
+  bus.publish(:order_created, number: order.number, user_email: user.email) # `creation_subscription` will run
+  bus.publish(:order_deleted, number: order.number) # `deletion_subscription` won't run
+end
+bus.publish(:order_deleted, number: order.number) # `deletion_subscription` will run
+```
+
+Remember that the array of created subscriptions is returned on `Omnes::Subscriber#subscribe_to`.
 
 ## Recipes
 

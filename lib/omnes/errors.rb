@@ -78,4 +78,24 @@ module Omnes
       MSG
     end
   end
+
+  # Raised when a subscription is not known by a bus
+  class UnknownSubscriptionError < Error
+    attr_reader :subscription, :bus
+
+    def initialize(subscription:, bus:)
+      @subscription = subscription
+      @bus = bus
+      super(default_message)
+    end
+
+    private
+
+    def default_message
+      <<~MSG
+        #{subscription.inspect} is not a subscription known by bus
+        #{bus.inspect}
+      MSG
+    end
+  end
 end

@@ -224,17 +224,30 @@ module Omnes
       @subscriptions.delete(subscription)
     end
 
-    # Returns a new bus with same registry and only the specified subscriptions
+    # Runs given block performing only a selection of subscriptions
     #
     # That's something useful for testing purposes, as it allows to silence
     # subscriptions that are not part of the system under test.
     #
-    # @param subscriptions [Array<Omnes::Subscription>]
-    def with_subscriptions(subscriptions)
-      Bus.new(
-        subscriptions: subscriptions,
-        registry: registry
-      )
+    # After the block is over, original subscriptions are restored.
+    #
+    # @param selection [Array<Omnes::Subscription>]
+    # @yield Block to run
+    #
+    # @raise [Omnes::UnknownSubscriptionError] when the subscription is not
+    #   known by the bus
+    def performing_only(*selection)
+      selection.each do |subscription|
+        unless subscriptions.include?(subscription)
+          raise UnknownSubscriptionError.new(subscription: subscription,
+                                             bus: self)
+        end
+      end
+      all_subscriptions = subscriptions
+      @subscriptions = selection
+      yield
+    ensure
+      @subscriptions = all_subscriptions
     end
 
     private

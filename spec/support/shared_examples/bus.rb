@@ -360,41 +360,78 @@ RSpec.shared_examples "bus" do
     end
   end
 
-  describe "#with_subscriptions" do
-    it "returns a new instance with given subscriptions" do
+  describe "#performing_only" do
+    it "runs given subcriptions" do
       bus = subject.new
-      dummy1, dummy2, dummy3 = Array.new(3) { counter.new }
       bus.register(:foo)
-      subscription1 = bus.subscribe(:foo) { dummy1.inc }
-      subscription2 = bus.subscribe(:foo) { dummy2.inc }
-      bus.subscribe(:foo) { dummy3.inc }
+      dummy = counter.new
+      subscription = bus.subscribe(:foo) { dummy.inc }
 
-      new_bus = bus.with_subscriptions([subscription1, subscription2])
-      new_bus.publish(:foo)
+      bus.performing_only(subscription) do
+        bus.publish(:foo)
+      end
 
-      expect(new_bus).not_to eq(bus)
-      expect(new_bus.subscriptions).to match_array([subscription1, subscription2])
-      expect(dummy1.count).to be(1)
-      expect(dummy2.count).to be(1)
-      expect(dummy3.count).to be(0)
+      expect(dummy.count).to be(1)
     end
 
-    it "keeps the same registry" do
+    it "doesn't run excluded subcriptions" do
       bus = subject.new
       bus.register(:foo)
+      dummy = counter.new
+      bus.subscribe(:foo) { dummy.inc }
 
-      new_bus = bus.with_subscriptions([])
+      bus.performing_only do
+        bus.publish(:foo)
+      end
 
-      expect(new_bus.registry).to be(bus.registry)
+      expect(dummy.count).to be(0)
     end
 
-    it "caller location start is 1" do
+    it "can run excluded subcriptions when the block is over" do
       bus = subject.new
       bus.register(:foo)
+      dummy = counter.new
+      bus.subscribe(:foo) { dummy.inc }
 
-      new_bus = bus.with_subscriptions([])
+      bus.performing_only do
+        bus.publish(:foo)
+      end
 
-      expect(new_bus.cal_loc_start).to be(1)
+      expect(dummy.count).to be(0)
+
+      bus.publish(:foo)
+
+      expect(dummy.count).to be(1)
+    end
+
+    it "restores old subcriptions when an exception is raised" do
+      bus = subject.new
+      bus.register(:foo)
+      dummy = counter.new
+      subscription = bus.subscribe(:foo) { raise "error" }
+      bus.subscribe(:foo) { dummy.inc }
+
+      bus.performing_only(subscription) do
+        expect do
+          bus.publish(:foo)
+        end.to raise_error(RuntimeError)
+      end
+
+      bus.unsubscribe(subscription)
+      bus.publish(:foo)
+
+      expect(dummy.count).to be(1)
+    end
+
+    it "raises an error when the subscription is now known" do
+      bus1 = subject.new
+      bus2 = subject.new
+      bus2.register(:foo)
+      subscription = bus2.subscribe(:foo)
+
+      expect do
+        bus1.performing_only(subscription)
+      end.to raise_error(Omnes::UnknownSubscriptionError)
     end
   end
 end
