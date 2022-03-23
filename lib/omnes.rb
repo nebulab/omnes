@@ -41,12 +41,22 @@ module Omnes
   end
 
   # Wrapper for the configuration of Omnes components
+  #
+  # TODO: Make automation for it
   module Config
     # {Omnes::Subscriber} configuration
     #
     # @return [Dry::Configurable::Config]
     def self.subscriber
-      Omnes::Subscriber.config
+      Omnes::Subscriber.config.tap do |klass|
+        klass.define_singleton_method(:adapter) do
+          Module.new do
+            def self.sidekiq
+              Omnes::Subscriber::Adapter::Sidekiq.config
+            end
+          end
+        end
+      end
     end
 
     # {Omnes::Event} configuration

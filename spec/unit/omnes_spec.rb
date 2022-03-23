@@ -9,6 +9,14 @@ RSpec.describe Omnes do
 
   include_examples "bus"
 
+  describe ".config.event" do
+    it "returns Omnes::Event.config" do
+      expect(
+        described_class.config.event
+      ).to be(Omnes::Event.config)
+    end
+  end
+
   describe ".config.subscriber" do
     it "returns Omnes::Subscriber.config" do
       expect(
@@ -17,11 +25,11 @@ RSpec.describe Omnes do
     end
   end
 
-  describe ".config.event" do
-    it "returns Omnes::Event.config" do
+  describe ".config.subscriber.adapter.sidekiq" do
+    it "returns Omnes::Subscriber::Adapter::Sidekiq.config" do
       expect(
-        described_class.config.event
-      ).to be(Omnes::Event.config)
+        described_class.config.subscriber.adapter.sidekiq
+      ).to be(Omnes::Subscriber::Adapter::Sidekiq.config)
     end
   end
 end
