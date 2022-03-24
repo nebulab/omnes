@@ -48,7 +48,7 @@ bus.register(:order_created)
 
 ### Publishing events
 
-An event can be anything responding to a method `:name`, which must match with a
+An event can be anything responding to a method `:omnes_event_name`, which must match with a
 registered name.
 
 Typically, there're two main ways to generate events.
@@ -73,8 +73,7 @@ features, such as event persistence, can't be reliably built on top of them.
 
 You can also publish an instance of a class including
 [`Omnes::Event`](lib/omnes/event.rb). The only fancy thing it provides is an
-OOTB event name generated based on the class name. In fact, you can use
-anything responding to `#omnes_event_name`.
+OOTB event name generated based on the class name.
 
 ```ruby
 class OrderCreatedEvent
