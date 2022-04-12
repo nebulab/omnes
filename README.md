@@ -206,7 +206,11 @@ class OrderCreationEmailSubscriber
     service.send(number: event.number, email: event.user_email)
   end
 end
+```
 
+You add the subscriptions by calling the `#subscribe_to` method on an instance:
+
+```ruby
 OrderCreationEmailSubscriber.new.subscribe_to(bus)
 ```
 
