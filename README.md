@@ -291,6 +291,12 @@ class OrderCreationEmailSubscriber
 end
 ```
 
+The strategy can also be globally set:
+
+```ruby
+Omnes.config.subscriber.autodiscover_strategy = AUTODISCOVER_STRATEGY
+```
+
 ### Adapters
 
 Subscribers are not limited to use a method as event handler. They can interact
