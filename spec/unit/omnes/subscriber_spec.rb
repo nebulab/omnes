@@ -97,6 +97,20 @@ RSpec.describe Omnes::Subscriber do
       expect(subscriber.called).to be(true)
     end
 
+    it "can provide id for the subscription" do
+      bus.register(:foo)
+      subscriber_class.class_eval do
+        handle :foo, with: :foo, id: :foo
+
+        def foo(_event); end
+      end
+      subscriber = subscriber_class.new
+
+      subscriptions = subscriber.subscribe_to(bus)
+
+      expect(bus.subscription(:foo)).to be(subscriptions[0])
+    end
+
     it "doesn't subscribe to other events" do
       bus.register(:foo)
       bus.register(:bar)
@@ -182,6 +196,20 @@ RSpec.describe Omnes::Subscriber do
       expect(subscriber.called).to be(true)
     end
 
+    it "can provide id for the subscription" do
+      bus.register(:foo)
+      subscriber_class.class_eval do
+        handle_all with: :foo, id: :all
+
+        def foo(_event); end
+      end
+      subscriber = subscriber_class.new
+
+      subscriptions = subscriber.subscribe_to(bus)
+
+      expect(bus.subscription(:all)).to be(subscriptions[0])
+    end
+
     it "builds the callback from a matching method when given a symbol" do
       bus.register(:foo)
       subscriber_class.class_eval do
@@ -237,6 +265,22 @@ RSpec.describe Omnes::Subscriber do
       expect(subscriber.called).to be(true)
     ensure
       Object.send(:remove_const, :TRUE_MATCHER)
+    end
+
+    it "can provide id for the subscription" do
+      bus.register(:foo)
+      subscriber_class.class_eval do
+        ::TRUE_MATCHER = ->(_candidate) { true }
+
+        handle_with_matcher TRUE_MATCHER, with: :foo, id: :foo
+
+        def foo(_event); end
+      end
+      subscriber = subscriber_class.new
+
+      subscriptions = subscriber.subscribe_to(bus)
+
+      expect(bus.subscription(:foo)).to be(subscriptions[0])
     end
 
     it "builds the callback from a matching method when given a symbol" do

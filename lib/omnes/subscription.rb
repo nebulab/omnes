@@ -2,6 +2,7 @@
 
 require "benchmark"
 require "omnes/execution"
+require "securerandom"
 
 module Omnes
   # Subscription to an event
@@ -23,13 +24,18 @@ module Omnes
 
     ALL_EVENTS_MATCHER = ->(_candidate) { true }
 
-    # @api private
-    attr_reader :matcher, :callback
+    def self.random_id
+      SecureRandom.uuid.to_sym
+    end
 
     # @api private
-    def initialize(matcher:, callback:)
+    attr_reader :matcher, :callback, :id
+
+    # @api private
+    def initialize(matcher:, callback:, id:)
       @matcher = matcher
       @callback = callback
+      @id = id
     end
 
     # @api private

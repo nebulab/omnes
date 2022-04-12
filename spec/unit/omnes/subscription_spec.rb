@@ -35,13 +35,13 @@ RSpec.describe Omnes::Subscription do
 
   describe "#call" do
     it "returns an execution instance" do
-      subscription = described_class.new(matcher: true_matcher, callback: proc {})
+      subscription = described_class.new(matcher: true_matcher, callback: proc {}, id: :id)
 
       expect(subscription.(:event)).to be_a(Omnes::Execution)
     end
 
     it "binds the event and sets execution's result" do
-      subscription = described_class.new(matcher: true_matcher, callback: ->(event) { event[:foo] })
+      subscription = described_class.new(matcher: true_matcher, callback: ->(event) { event[:foo] }, id: :id)
 
       execution = subscription.(foo: :bar)
 
@@ -49,7 +49,7 @@ RSpec.describe Omnes::Subscription do
     end
 
     it "sets itself as the execution subscription" do
-      subscription = described_class.new(matcher: true_matcher, callback: proc { "foo" })
+      subscription = described_class.new(matcher: true_matcher, callback: proc { "foo" }, id: :id)
 
       execution = subscription.(:event)
 
@@ -57,7 +57,7 @@ RSpec.describe Omnes::Subscription do
     end
 
     it "sets the execution's benchmark" do
-      subscription = described_class.new(matcher: true_matcher, callback: proc { "foo" })
+      subscription = described_class.new(matcher: true_matcher, callback: proc { "foo" }, id: :id)
 
       execution = subscription.(:event)
 
@@ -67,13 +67,13 @@ RSpec.describe Omnes::Subscription do
 
   describe "#matches?" do
     it "return true when matcher returns true for given candidate" do
-      subscription = described_class.new(matcher: true_matcher, callback: -> {})
+      subscription = described_class.new(matcher: true_matcher, callback: -> {}, id: :id)
 
       expect(subscription.matches?(:foo)).to be(true)
     end
 
     it "return false when matcher returns false for given candidate" do
-      subscription = described_class.new(matcher: false_matcher, callback: -> {})
+      subscription = described_class.new(matcher: false_matcher, callback: -> {}, id: :id)
 
       expect(subscription.matches?(:bar)).to be(false)
     end
@@ -81,7 +81,7 @@ RSpec.describe Omnes::Subscription do
 
   describe "#subscriptions" do
     it "returns a list containing only itself" do
-      subscription = described_class.new(matcher: true_matcher, callback: -> {})
+      subscription = described_class.new(matcher: true_matcher, callback: -> {}, id: :id)
 
       expect(subscription.subscriptions).to eq([subscription])
     end

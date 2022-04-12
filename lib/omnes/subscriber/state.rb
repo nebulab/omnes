@@ -50,18 +50,19 @@ module Omnes
           add_subscription_definition do |_bus|
             [
               Subscription::SINGLE_EVENT_MATCHER.curry[event_name],
-              Adapter.Type(Adapter::Method.new(method_name))
+              Adapter.Type(Adapter::Method.new(method_name)),
+              Subscription.random_id
             ]
           end
         end
       end
 
       def subscribe_definitions(definitions, bus, instance)
-        matcher_with_callbacks = definitions.map do |(matcher, adapter)|
-          [matcher, adapter.curry[instance]]
+        matcher_with_callbacks = definitions.map do |(matcher, adapter, id)|
+          [matcher, adapter.curry[instance], id]
         end
 
-        matcher_with_callbacks.map { |matcher, callback| bus.subscribe_with_matcher(matcher, callback) }
+        matcher_with_callbacks.map { |matcher, callback, id| bus.subscribe_with_matcher(matcher, callback, id: id) }
       end
     end
   end
