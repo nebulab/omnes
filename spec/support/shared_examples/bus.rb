@@ -213,6 +213,15 @@ RSpec.shared_examples "bus" do
       expect(subscription.callback.()).to be(:foo)
     end
 
+    it "can provide an identifier for the subscription" do
+      bus = subject.new
+      bus.register(:foo)
+
+      subscription = bus.subscribe_with_matcher(true_matcher, id: :foo_subscription) { :foo }
+
+      expect(bus.subscription(:foo_subscription)).to be(subscription)
+    end
+
     it "runs when matcher returns true" do
       dummy = counter.new
       bus = subject.new
@@ -267,6 +276,15 @@ RSpec.shared_examples "bus" do
 
       subscription = bus.subscriptions.first
       expect(subscription.callback.()).to be(:foo)
+    end
+
+    it "can provide an identifier for the subscription" do
+      bus = subject.new
+      bus.register(:foo)
+
+      subscription = bus.subscribe(:foo, id: :foo_subscription) { :foo }
+
+      expect(bus.subscription(:foo_subscription)).to be(subscription)
     end
 
     it "runs when published event matches" do
@@ -332,6 +350,15 @@ RSpec.shared_examples "bus" do
 
       subscription = bus.subscriptions.first
       expect(subscription.callback.()).to be(:foo)
+    end
+
+    it "can provide an identifier for the subscription" do
+      bus = subject.new
+      bus.register(:foo)
+
+      subscription = bus.subscribe_to_all(id: :foo_subscription) { :foo }
+
+      expect(bus.subscription(:foo_subscription)).to be(subscription)
     end
 
     it "runs for every event" do
@@ -447,6 +474,17 @@ RSpec.shared_examples "bus" do
       end
 
       expect(dummy.count).to be(0)
+    end
+  end
+
+  describe "#subscription" do
+    it "fetchs a subscription by its id" do
+      bus = subject.new
+      bus.register(:foo)
+
+      subscription = bus.subscribe(:foo, id: :foo_subs) { :foo }
+
+      expect(bus.subscription(:foo_subs)).to be(subscription)
     end
   end
 end

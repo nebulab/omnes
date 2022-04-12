@@ -459,6 +459,25 @@ subscription = bus.subscribe(:order_created, OrderCreationEmailSubscription.new)
 bus.unsubscribe(subscription)
 ```
 
+Often you won't have a reference of the subscriber at hand. However, you can
+provide a subscription identifier for all the subscription methods we've seen
+so far.
+
+```ruby
+# For subscribe methods on the bus
+bus.subscribe(:order_created, OrderCreationEmailSubscription.new, id: :order_created_email)
+
+# For subscriber objects
+handle :order_created, with: :send_confirmation_email, id: :order_created_email
+```
+
+Then, you can use it to fetch the actual subscription:
+
+```ruby
+subscription = bus.subscription(:send_confirmation_email)
+bus.unsubscribe(subscription)
+```
+
 ### Registration
 
 Whenever you register an event, you get back an [`Omnes::Registry::Registration`](lib/omnes/registry.rb)
@@ -530,7 +549,8 @@ end
 bus.publish(:order_deleted, number: order.number) # `deletion_subscription` will run
 ```
 
-Remember that the array of created subscriptions is returned on `Omnes::Subscriber#subscribe_to`.
+Remember that you can get previous subscription references thanks to
+subscription identifiers. See [Unsubscribing](#unsubscribing) for details.
 
 There's also a specialized `Omnes::Bus#performing_nothing` method that runs no
 subscriptions for the duration of the block.

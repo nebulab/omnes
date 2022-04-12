@@ -104,6 +104,21 @@ module Omnes
   #
   # bus.subscribe_with_matcher(matcher, MySubscription.new)
   # ```
+  #
+  # For all previous subscription methods, a subscription object is returned.
+  # You can supply a subscription id to it to be able to fetch it from the bus
+  # later on:
+  #
+  # ```
+  # subscription = bus.subscribe(:foo, MySubscription.new, id: :foo_sub)
+  # bus.subscription(:foo_sub) == subscription #=> true
+  # ```
+  #
+  # A subscription can be referenced when you want to unsubscribe:
+  #
+  # ```
+  # bus.unsubscribe(subscription)
+  # ```
   class Bus
     # @api private
     def self.EventType(value, **payload)
@@ -182,37 +197,40 @@ module Omnes
     #
     # @param event_name [Symbol] Name of the event
     # @param callable [#call] Subscription callback taking the event
+    # @param id [Symbol] Unique identifier for the subscription
     # @yield [event] Subscription callback if callable is not given
     #
     # @return [Omnes::Subscription]
     #
     # @raise [Omnes::UnknownEventError] When event name has not been registered
-    def subscribe(event_name, callable = nil, &block)
+    def subscribe(event_name, callable = nil, id: Subscription.random_id, &block)
       registry.check_event_name(event_name)
 
-      subscribe_with_matcher(Subscription::SINGLE_EVENT_MATCHER.curry[event_name], callable, &block)
+      subscribe_with_matcher(Subscription::SINGLE_EVENT_MATCHER.curry[event_name], callable, id: id, &block)
     end
 
     # Adds a subscription for all events
     #
     # @param callable [#call] Subscription callback taking the event
+    # @param id [Symbol] Unique identifier for the subscription
     # @yield [event] Subscription callback if callable is not given
     #
     # @return [Omnes::Subscription]
-    def subscribe_to_all(callable = nil, &block)
-      subscribe_with_matcher(Subscription::ALL_EVENTS_MATCHER, callable, &block)
+    def subscribe_to_all(callable = nil, id: Subscription.random_id, &block)
+      subscribe_with_matcher(Subscription::ALL_EVENTS_MATCHER, callable, id: id, &block)
     end
 
     # Adds a subscription with given matcher
     #
     # @param matcher [#call] Callable taking the event and returning a boolean
     # @param callable [#call] Subscription callback taking the event
+    # @param id [Symbol] Unique identifier for the subscription
     # @yield [event] Subscription callback if callable is not given
     #
     # @return [Omnes::Subscription]
-    def subscribe_with_matcher(matcher, callable = nil, &block)
+    def subscribe_with_matcher(matcher, callable = nil, id: Subscription.random_id, &block)
       callback = callable || block
-      Subscription.new(matcher: matcher, callback: callback).tap do |subscription|
+      Subscription.new(matcher: matcher, callback: callback, id: id).tap do |subscription|
         @subscriptions << subscription
       end
     end
@@ -255,6 +273,15 @@ module Omnes
     # @see #performing_only
     def performing_nothing(&block)
       performing_only(&block)
+    end
+
+    # Fetch a subscription by its identifier
+    #
+    # @param id [Symbol] Subscription identifier
+    #
+    # @return [Omnes::Subscription]
+    def subscription(id)
+      subscriptions.find { |subscription| subscription.id == id }
     end
 
     private

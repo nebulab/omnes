@@ -193,11 +193,12 @@ module Omnes
       #
       # @param event_name [Symbol]
       # @param with [Symbol, #call] Public method in the class or an adapter
-      def handle(event_name, with:)
+      # @param id [Symbol] Unique identifier for the subscription
+      def handle(event_name, with:, id: Subscription.random_id)
         @_mutex.synchronize do
           @_state.add_subscription_definition do |bus|
             bus.registry.check_event_name(event_name)
-            [Subscription::SINGLE_EVENT_MATCHER.curry[event_name], Adapter.Type(with)]
+            [Subscription::SINGLE_EVENT_MATCHER.curry[event_name], Adapter.Type(with), id]
           end
         end
       end
@@ -205,10 +206,11 @@ module Omnes
       # Handles all events
       #
       # @param with [Symbol, #call] Public method in the class or an adapter
-      def handle_all(with:)
+      # @param id [Symbol] Unique identifier for the subscription
+      def handle_all(with:, id: Subscription.random_id)
         @_mutex.synchronize do
           @_state.add_subscription_definition do |_bus|
-            [Subscription::ALL_EVENTS_MATCHER, Adapter.Type(with)]
+            [Subscription::ALL_EVENTS_MATCHER, Adapter.Type(with), id]
           end
         end
       end
@@ -217,10 +219,11 @@ module Omnes
       #
       # @param matcher [#call]
       # @param with [Symbol, #call] Public method in the class or an adapter
-      def handle_with_matcher(matcher, with:)
+      # @param id [Symbol] Unique identifier for the subscription
+      def handle_with_matcher(matcher, with:, id: Subscription.random_id)
         @_mutex.synchronize do
           @_state.add_subscription_definition do |_bus|
-            [matcher, Adapter.Type(with)]
+            [matcher, Adapter.Type(with), id]
           end
         end
       end
