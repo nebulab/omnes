@@ -229,6 +229,8 @@ module Omnes
     #
     # @return [Omnes::Subscription]
     def subscribe_with_matcher(matcher, callable = nil, id: Subscription.random_id, &block)
+      raise DuplicateSubscriptionIdError.new(id: id, bus: self) if subscription(id)
+
       callback = callable || block
       Subscription.new(matcher: matcher, callback: callback, id: id).tap do |subscription|
         @subscriptions << subscription

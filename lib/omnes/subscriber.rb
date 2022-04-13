@@ -196,9 +196,9 @@ module Omnes
       # @param id [Symbol] Unique identifier for the subscription
       def handle(event_name, with:, id: Subscription.random_id)
         @_mutex.synchronize do
-          @_state.add_subscription_definition do |bus|
+          @_state.add_subscription_definition do |bus, instance|
             bus.registry.check_event_name(event_name)
-            [Subscription::SINGLE_EVENT_MATCHER.curry[event_name], Adapter.Type(with), id]
+            [Subscription::SINGLE_EVENT_MATCHER.curry[event_name], Adapter.Type(with), State.IdType(id).(instance)]
           end
         end
       end
@@ -209,8 +209,8 @@ module Omnes
       # @param id [Symbol] Unique identifier for the subscription
       def handle_all(with:, id: Subscription.random_id)
         @_mutex.synchronize do
-          @_state.add_subscription_definition do |_bus|
-            [Subscription::ALL_EVENTS_MATCHER, Adapter.Type(with), id]
+          @_state.add_subscription_definition do |_bus, instance|
+            [Subscription::ALL_EVENTS_MATCHER, Adapter.Type(with), State.IdType(id).(instance)]
           end
         end
       end
@@ -222,8 +222,8 @@ module Omnes
       # @param id [Symbol] Unique identifier for the subscription
       def handle_with_matcher(matcher, with:, id: Subscription.random_id)
         @_mutex.synchronize do
-          @_state.add_subscription_definition do |_bus|
-            [matcher, Adapter.Type(with), id]
+          @_state.add_subscription_definition do |_bus, instance|
+            [matcher, Adapter.Type(with), State.IdType(id).(instance)]
           end
         end
       end

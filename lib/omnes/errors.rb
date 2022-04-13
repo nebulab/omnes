@@ -98,4 +98,23 @@ module Omnes
       MSG
     end
   end
+
+  # Raised when given subscription id is already in use
+  class DuplicateSubscriptionIdError < Error
+    attr_reader :id, :bus
+
+    def initialize(id:, bus:)
+      @id = id
+      @bus = bus
+      super(default_message)
+    end
+
+    private
+
+    def default_message
+      <<~MSG
+        #{id} has already been used as a subscription identifier
+      MSG
+    end
+  end
 end
