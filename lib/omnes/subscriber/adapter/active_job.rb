@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "dry/configurable"
+require "omnes/configurable"
 
 module Omnes
   module Subscriber
@@ -42,7 +42,7 @@ module Omnes
       # Omnes.config.subscriber.adapter.active_job.serializer = :serialized_payload.to_proc
       # ```
       module ActiveJob
-        extend Dry::Configurable
+        extend Configurable
 
         setting :serializer, default: :payload.to_proc
 

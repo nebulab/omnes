@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "dry/configurable"
+require "omnes/configurable"
 
 module Omnes
   # Event mixin for custom classes
@@ -27,7 +27,7 @@ module Omnes
   # bus.publish(MyEvent.new(1))
   # ```
   module Event
-    extend Dry::Configurable
+    extend Configurable
 
     # Generates the event name for an event instance
     #

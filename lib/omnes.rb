@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "omnes/bus"
+require "omnes/configurable"
 require "omnes/event"
 require "omnes/subscriber"
 require "omnes/version"
@@ -33,43 +34,10 @@ require "omnes/version"
 # Refer to {Omnes::Subscriber} for how to provide event handlers through methods
 # defined in a class.
 module Omnes
-  # Shortcut to access the configuration for different Omnes components
-  #
-  # TODO: Make automation for it
-  #
-  # @return [Omnes::Config]
-  def self.config
-    Config
-  end
+  extend Configurable
 
-  # Wrapper for the configuration of Omnes components
-  module Config
-    # {Omnes::Subscriber} configuration
-    #
-    # @return [Dry::Configurable::Config]
-    def self.subscriber
-      Omnes::Subscriber.config.tap do |klass|
-        klass.define_singleton_method(:adapter) do
-          Module.new do
-            def self.sidekiq
-              Omnes::Subscriber::Adapter::Sidekiq.config
-            end
-
-            def self.active_job
-              Omnes::Subscriber::Adapter::ActiveJob.config
-            end
-          end
-        end
-      end
-    end
-
-    # {Omnes::Event} configuration
-    #
-    # @return [Dry::Configurable::Config]
-    def self.event
-      Omnes::Event.config
-    end
-  end
+  nest_config Subscriber
+  nest_config Event
 
   # @api private
   def self.included(klass)
