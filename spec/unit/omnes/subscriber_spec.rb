@@ -111,6 +111,44 @@ RSpec.describe Omnes::Subscriber do
       expect(bus.subscription(:foo)).to be(subscriptions[0])
     end
 
+    it "can provide instance-based id for the subscription" do
+      bus.register(:foo)
+      subscriber_class = Class.new do
+        include Omnes::Subscriber
+
+        attr_reader :id_suffix
+
+        def initialize(id_suffix)
+          @id_suffix = id_suffix
+        end
+
+        handle :foo, with: :foo, id: ->(instance) { :"foo_#{instance.id_suffix}" }
+
+        def foo(_event); end
+      end
+      subscriber = subscriber_class.new(:one)
+
+      subscriptions = subscriber.subscribe_to(bus)
+
+      expect(bus.subscription(:foo_one)).to be(subscriptions[0])
+    end
+
+    it "raises when given subscription id has already been used" do
+      bus.register(:foo)
+      bus.register(:bar)
+      subscriber_class.class_eval do
+        handle :foo, with: :foo, id: :foo
+        handle :bar, with: :foo, id: :foo
+
+        def foo(_event); end
+      end
+      subscriber = subscriber_class.new
+
+      expect {
+        subscriber.subscribe_to(bus)
+      }.to raise_error(Omnes::DuplicateSubscriptionIdError)
+    end
+
     it "doesn't subscribe to other events" do
       bus.register(:foo)
       bus.register(:bar)
@@ -210,6 +248,41 @@ RSpec.describe Omnes::Subscriber do
       expect(bus.subscription(:all)).to be(subscriptions[0])
     end
 
+    it "can provide instance-based id for the subscription" do
+      subscriber_class = Class.new do
+        include Omnes::Subscriber
+
+        attr_reader :id_suffix
+
+        def initialize(id_suffix)
+          @id_suffix = id_suffix
+        end
+
+        handle_all with: :foo, id: ->(instance) { :"foo_#{instance.id_suffix}" }
+
+        def foo(_event); end
+      end
+      subscriber = subscriber_class.new(:one)
+
+      subscriptions = subscriber.subscribe_to(bus)
+
+      expect(bus.subscription(:foo_one)).to be(subscriptions[0])
+    end
+
+    it "raises when given subscription id has already been used" do
+      subscriber_class.class_eval do
+        handle_all with: :foo, id: :foo
+        handle_all with: :foo, id: :foo
+
+        def foo(_event); end
+      end
+      subscriber = subscriber_class.new
+
+      expect {
+        subscriber.subscribe_to(bus)
+      }.to raise_error(Omnes::DuplicateSubscriptionIdError)
+    end
+
     it "builds the callback from a matching method when given a symbol" do
       bus.register(:foo)
       subscriber_class.class_eval do
@@ -281,6 +354,51 @@ RSpec.describe Omnes::Subscriber do
       subscriptions = subscriber.subscribe_to(bus)
 
       expect(bus.subscription(:foo)).to be(subscriptions[0])
+    ensure
+      Object.send(:remove_const, :TRUE_MATCHER)
+    end
+
+    it "can provide instance-based id for the subscription" do
+      subscriber_class = Class.new do
+        include Omnes::Subscriber
+
+        ::TRUE_MATCHER = ->(_candidate) { true }
+
+        attr_reader :id_suffix
+
+        def initialize(id_suffix)
+          @id_suffix = id_suffix
+        end
+
+        handle_with_matcher TRUE_MATCHER, with: :foo, id: ->(instance) { :"foo_#{instance.id_suffix}" }
+
+        def foo(_event); end
+      end
+      subscriber = subscriber_class.new(:one)
+
+      subscriptions = subscriber.subscribe_to(bus)
+
+      expect(bus.subscription(:foo_one)).to be(subscriptions[0])
+    ensure
+      Object.send(:remove_const, :TRUE_MATCHER)
+    end
+
+    it "raises when given subscription id has already been used" do
+      subscriber_class.class_eval do
+        ::TRUE_MATCHER = ->(_candidate) { true }
+
+        handle_with_matcher TRUE_MATCHER, with: :foo, id: :foo
+        handle_with_matcher TRUE_MATCHER, with: :foo, id: :foo
+
+        def foo(_event); end
+      end
+      subscriber = subscriber_class.new
+
+      expect {
+        subscriber.subscribe_to(bus)
+      }.to raise_error(Omnes::DuplicateSubscriptionIdError)
+    ensure
+      Object.send(:remove_const, :TRUE_MATCHER)
     end
 
     it "builds the callback from a matching method when given a symbol" do
@@ -330,9 +448,35 @@ RSpec.describe Omnes::Subscriber do
     it "can subscribe multiple instances to the same bus" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        handle :foo, with: :foo
+        handle :foo, with: :foo, id: ->(instance) { instance.object_id }
 
         def foo(_event)
+          @called = true
+        end
+      end
+      subscriber1 = subscriber_class.new
+      subscriber2 = subscriber_class.new
+
+      subscriber1.subscribe_to(bus)
+      subscriber2.subscribe_to(bus)
+      bus.publish(:foo)
+
+      expect(subscriber1.called).to be(true)
+      expect(subscriber2.called).to be(true)
+    end
+
+    it "can subscribe multiple instances to the same bus with autodiscovery" do
+      bus.register(:foo)
+      subscriber_class = Class.new do
+        include Omnes::Subscriber[autodiscover: true]
+
+        attr_reader :called
+
+        def initialize
+          @called = false
+        end
+
+        def on_foo(_event)
           @called = true
         end
       end

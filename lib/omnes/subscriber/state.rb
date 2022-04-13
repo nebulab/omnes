@@ -10,6 +10,11 @@ module Omnes
     class State
       attr_reader :subscription_definitions, :calling_cache, :autodiscover_strategy
 
+      # @api private
+      def self.IdType(value)
+        value.respond_to?(:call) ? value : ->(_instance) { value }
+      end
+
       def initialize(autodiscover_strategy:, subscription_definitions: [], calling_cache: [])
         @subscription_definitions = subscription_definitions
         @calling_cache = calling_cache
@@ -21,7 +26,7 @@ module Omnes
 
         autodiscover_subscription_definitions(bus, instance) unless autodiscover_strategy.nil?
 
-        definitions = subscription_definitions.map { |defn| defn.(bus) }
+        definitions = subscription_definitions.map { |defn| defn.(bus, instance) }
 
         subscribe_definitions(definitions, bus, instance).tap do
           mark_as_called(bus, instance)

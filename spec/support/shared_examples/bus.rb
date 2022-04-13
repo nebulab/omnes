@@ -222,6 +222,17 @@ RSpec.shared_examples "bus" do
       expect(bus.subscription(:foo_subscription)).to be(subscription)
     end
 
+    it "raises when given subscription id has already been used" do
+      bus = subject.new
+      bus.register(:foo)
+
+      bus.subscribe_with_matcher(true_matcher, id: :foo_subscription) { :foo }
+
+      expect {
+        bus.subscribe_with_matcher(true_matcher, id: :foo_subscription) { :foo }
+      }.to raise_error(Omnes::DuplicateSubscriptionIdError)
+    end
+
     it "runs when matcher returns true" do
       dummy = counter.new
       bus = subject.new
@@ -285,6 +296,17 @@ RSpec.shared_examples "bus" do
       subscription = bus.subscribe(:foo, id: :foo_subscription) { :foo }
 
       expect(bus.subscription(:foo_subscription)).to be(subscription)
+    end
+
+    it "raises when given subscription id has already been used" do
+      bus = subject.new
+      bus.register(:foo)
+
+      bus.subscribe(:foo, id: :foo_subscription) { :foo }
+
+      expect {
+        bus.subscribe(:foo, id: :foo_subscription) { :foo }
+      }.to raise_error(Omnes::DuplicateSubscriptionIdError)
     end
 
     it "runs when published event matches" do
@@ -359,6 +381,17 @@ RSpec.shared_examples "bus" do
       subscription = bus.subscribe_to_all(id: :foo_subscription) { :foo }
 
       expect(bus.subscription(:foo_subscription)).to be(subscription)
+    end
+
+    it "raises when given subscription id has already been used" do
+      bus = subject.new
+      bus.register(:foo)
+
+      bus.subscribe_to_all(id: :foo_subscription) { :foo }
+
+      expect {
+        bus.subscribe_to_all(id: :foo_subscription) { :foo }
+      }.to raise_error(Omnes::DuplicateSubscriptionIdError)
     end
 
     it "runs for every event" do

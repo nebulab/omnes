@@ -183,6 +183,22 @@ bus.subscribe_with_matcher(ORDER_EVENTS_MATCHER) do |event|
 end
 ```
 
+### Referencing subscriptions
+
+For all subscription methods we've seen, an `Omnes::Subscription` instance is
+returned. Holding that reference can be useful for [Debugging][#debugging] and
+[Testing][#testing]  purposes.
+
+Often though, you won't have the reference at hand when you need it.
+Thankfully, you can provide a subscription identifier on subscription time and
+use it later to fetch the subscription instance from the bus. A subscription
+identifier needs to be a `Symbol`:
+
+```ruby
+bus.subscribe(:order_created, OrderCreationEmailSubscription.new, id: :order_created_email)
+subscription = bus.subscription(:send_confirmation_email)
+```
+
 ## Event subscribers
 
 Events subscribers offer a way to define event subscriptions from a custom
@@ -247,6 +263,21 @@ class OrderSubscriber
     # ...
   end
 end
+```
+
+Likewise, you can provide [identifiers to reference
+subscriptions](#referencing-subscriptions):
+
+```ruby
+handle :order_created, with: :send_confirmation_email, id: :order_creation_email_subscriber
+```
+
+As you can subscribe multiple instances of a subscriber to the same bus, you
+might need to create a different identifier for each of them. For those cases,
+you can pass a lambda taking the subscriber instance:
+
+```ruby
+handle :order_created, with: :send_confirmation_email, id: ->(subscriber) { :"#{subscriber.id}_order_creation_email_subscriber" }
 ```
 
 ### Autodiscovering event handlers
@@ -449,32 +480,11 @@ handle :order_created, with: ThreadAdapter.new(:order_created)
 
 ### Unsubscribing
 
-When you create a subscription, an instance of
-[`Omnes::Subscription`](lib/omnes/subscription.rb) is returned (or an array for
-`Omnes::Subscriber`). It can be used to unsubscribe it in case you need to
-debug some behavior.
+You can unsubscribe a given subscription by passing its
+[reference](#referencing-subscriptions) to `Omnes::Bus#unsubscribe`:
 
 ```ruby
 subscription = bus.subscribe(:order_created, OrderCreationEmailSubscription.new)
-bus.unsubscribe(subscription)
-```
-
-Often you won't have a reference of the subscriber at hand. However, you can
-provide a subscription identifier for all the subscription methods we've seen
-so far.
-
-```ruby
-# For subscribe methods on the bus
-bus.subscribe(:order_created, OrderCreationEmailSubscription.new, id: :order_created_email)
-
-# For subscriber objects
-handle :order_created, with: :send_confirmation_email, id: :order_created_email
-```
-
-Then, you can use it to fetch the actual subscription:
-
-```ruby
-subscription = bus.subscription(:send_confirmation_email)
 bus.unsubscribe(subscription)
 ```
 
@@ -549,8 +559,9 @@ end
 bus.publish(:order_deleted, number: order.number) # `deletion_subscription` will run
 ```
 
-Remember that you can get previous subscription references thanks to
-subscription identifiers. See [Unsubscribing](#unsubscribing) for details.
+Remember that you can get previous [subscription
+references](#referencing-subscriptions) thanks to
+subscription identifiers.
 
 There's also a specialized `Omnes::Bus#performing_nothing` method that runs no
 subscriptions for the duration of the block.
