@@ -448,7 +448,7 @@ RSpec.describe Omnes::Subscriber do
     it "can subscribe multiple instances to the same bus" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        handle :foo, with: :foo, id: ->(instance) { instance.object_id }
+        handle :foo, with: :foo, id: ->(instance) { instance.object_id.to_s.to_sym }
 
         def foo(_event)
           @called = true
