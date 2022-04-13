@@ -33,6 +33,8 @@ module Omnes
 
     # @api private
     def initialize(matcher:, callback:, id:)
+      raise Omnes::InvalidSubscriptionNameError.new(id: id) unless id.is_a?(Symbol)
+
       @matcher = matcher
       @callback = callback
       @id = id

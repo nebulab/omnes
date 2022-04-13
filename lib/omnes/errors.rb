@@ -117,4 +117,23 @@ module Omnes
       MSG
     end
   end
+
+  # Raised when trying to set an invalid subscription identifier
+  class InvalidSubscriptionNameError < Error
+    attr_reader :id
+
+    def initialize(id:)
+      @id = id
+      super(default_message)
+    end
+
+    private
+
+    def default_message
+      <<~MSG
+        #{id.inspect} is not a valid subscription identifier. Only symbols are
+        #allowed.
+      MSG
+    end
+  end
 end

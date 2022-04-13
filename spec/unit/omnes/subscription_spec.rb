@@ -33,6 +33,14 @@ RSpec.describe Omnes::Subscription do
     end
   end
 
+  describe "#initialize" do
+    it "raises when id is not a Symbol" do
+      expect {
+        described_class.new(matcher: true_matcher, callback: proc {}, id: 1)
+      }.to raise_error(Omnes::InvalidSubscriptionNameError)
+    end
+  end
+
   describe "#call" do
     it "returns an execution instance" do
       subscription = described_class.new(matcher: true_matcher, callback: proc {}, id: :id)
