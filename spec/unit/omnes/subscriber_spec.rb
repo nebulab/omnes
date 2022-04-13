@@ -17,6 +17,14 @@ RSpec.describe Omnes::Subscriber do
   end
   let(:bus) { Omnes::Bus.new }
 
+  describe ".config" do
+    it "nests Adapter config under adapter" do
+      expect(
+        described_class.config.adapter
+      ).to be(Omnes::Subscriber::Adapter.config)
+    end
+  end
+
   it "autodiscover is off by default" do
     bus.register(:foo)
     subscriber_class = Class.new do

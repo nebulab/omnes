@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "dry/configurable"
+require "omnes/configurable"
 
 module Omnes
   module Subscriber
@@ -49,7 +49,7 @@ module Omnes
       # @example
       #   handle :my_event, with: Adapter::Sidekiq.in(60)
       module Sidekiq
-        extend Dry::Configurable
+        extend Configurable
 
         setting :serializer, default: :payload.to_proc
 

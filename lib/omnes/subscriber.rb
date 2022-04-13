@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "dry/configurable"
 require "omnes/subscriber/adapter"
 require "omnes/subscriber/state"
 require "omnes/subscription"
@@ -122,14 +121,14 @@ module Omnes
   # bus. However, you can subscribe distinct instances to the same bus or the
   # same instance to different buses.
   module Subscriber
-    extend Dry::Configurable
+    extend Configurable
 
     # @api private
     ON_PREFIX_STRATEGY = ->(event_name) { :"on_#{event_name}" }
 
     setting :autodiscover, default: false
-
     setting :autodiscover_strategy, default: ON_PREFIX_STRATEGY
+    nest_config Adapter
 
     # Includes with options
     #

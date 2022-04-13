@@ -566,6 +566,23 @@ subscription identifiers.
 There's also a specialized `Omnes::Bus#performing_nothing` method that runs no
 subscriptions for the duration of the block.
 
+## Configuration
+
+We've seen the relevant configurable settings in the corresponding sections.
+You can also access the configuration in the habitual block syntax:
+
+```ruby
+Omnes.configure do |config|
+  config.subscriber.adapter.sidekiq.serializer = :serialized_payload.to_proc
+end
+```
+
+Finally, nested settings can also be set directly from the affected class. E.g.:
+
+```ruby
+Omnes::Subscriber::Adapter::Sidekiq.config.serializer = :serialized_payload.to_proc
+```
+
 ## Recipes
 
 ### Rails
