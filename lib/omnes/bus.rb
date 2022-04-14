@@ -22,8 +22,8 @@ module Omnes
   # bus.register(:foo)
   # ```
   #
-  # An event can be anything responding to a method `:name` which, needless to
-  # say, must match with a registered name.
+  # An event can be anything responding to a method `:omes_event_name` which,
+  # needless to say, must match with a registered name.
   #
   # Typically, there're two main ways to generate events.
   #
