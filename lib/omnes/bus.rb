@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "omnes/publication"
+require "omnes/publication_context"
 require "omnes/registry"
 require "omnes/subscription"
 require "omnes/unstructured_event"
@@ -183,13 +184,13 @@ module Omnes
       publication_time = Time.now.utc
       event = self.class.EventType(event, **payload)
       registry.check_event_name(event.omnes_event_name)
-      executions = execute_subscriptions_for_event(event)
+      publication_context = PublicationContext.new(caller_location: caller_location, time: publication_time)
+      executions = execute_subscriptions_for_event(event, publication_context)
 
       Publication.new(
         event: event,
         executions: executions,
-        caller_location: caller_location,
-        time: publication_time
+        context: publication_context
       )
     end
 
@@ -288,9 +289,9 @@ module Omnes
 
     private
 
-    def execute_subscriptions_for_event(event)
+    def execute_subscriptions_for_event(event, publication_context)
       subscriptions_for_event(event).map do |subscription|
-        subscription.(event)
+        subscription.(event, publication_context)
       end
     end
 

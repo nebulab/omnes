@@ -52,8 +52,8 @@ module Omnes
         end
 
         # @api private
-        def self.call(instance, event)
-          self.[].(instance, event)
+        def self.call(instance, event, publication_context)
+          self.[].(instance, event, publication_context)
         end
 
         # @api private
@@ -64,8 +64,12 @@ module Omnes
             @serializer = serializer
           end
 
-          def call(instance, event)
-            instance.class.perform_later(serializer.(event))
+          def call(instance, event, publication_context)
+            if Subscription.takes_publication_context?(instance.method(:perform))
+              instance.class.perform_later(serializer.(event), publication_context.serialized)
+            else
+              instance.class.perform_later(serializer.(event))
+            end
           end
         end
       end

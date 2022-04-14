@@ -123,24 +123,44 @@ RSpec.shared_examples "bus" do
       expect(dummy.box).to eq(:bar)
     end
 
-    it "adds the caller location to the publication result object" do
+    it "yields the publication context as second parameter for the subscription" do
       bus = subject.new
       bus.register(:foo)
-      bus.subscribe(:foo) { :work }
+      bus.subscribe(:foo) do |_event, publication_context|
+        expect(publication_context.is_a?(Omnes::PublicationContext)).to be(true)
+      end
 
-      publication = bus.publish :foo
-
-      expect(publication.caller_location.to_s).to include(__FILE__)
+      bus.publish(:foo)
     end
 
-    it "adds the publication time to the publication result object" do
+    it "adds the caller location to the provided publication context" do
+      bus = subject.new
+      bus.register(:foo)
+      bus.subscribe(:foo) do |_event, publication_context|
+        expect(publication_context.caller_location.to_s).to include(__FILE__)
+      end
+
+      bus.publish(:foo)
+    end
+
+    it "adds publication time to the provided publication context" do
+      bus = subject.new
+      bus.register(:foo)
+      bus.subscribe(:foo) do |_event, publication_context|
+        expect(publication_context.time).not_to be_nil
+      end
+
+      bus.publish(:foo)
+    end
+
+    it "returns a publication instance" do
       bus = subject.new
       bus.register(:foo)
       bus.subscribe(:foo) { :work }
 
       publication = bus.publish :foo
 
-      expect(publication.time).not_to be(nil)
+      expect(publication.is_a?(Omnes::Publication)).to be(true)
     end
 
     it "adds the published event to the publication result object" do
@@ -166,6 +186,16 @@ RSpec.shared_examples "bus" do
       expect(executions.count).to be(2)
       expect(executions.map(&:subscription)).to match([subscription1, subscription2])
       expect(executions.map(&:result)).to match([1, 2])
+    end
+
+    it "adds the context to the publication result object" do
+      bus = subject.new
+      bus.register(:foo)
+      bus.subscribe(:foo) { :work }
+
+      publication = bus.publish :foo
+
+      expect(publication.context.is_a?(Omnes::PublicationContext)).to be(true)
     end
 
     it "raises when the published event hasn't been registered" do

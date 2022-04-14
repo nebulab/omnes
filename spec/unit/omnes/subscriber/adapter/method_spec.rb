@@ -4,41 +4,92 @@ require "spec_helper"
 require "omnes/subscriber/adapter/method"
 
 RSpec.describe Omnes::Subscriber::Adapter::Method do
-  describe "#call" do
-    it "returns lambda that calls method with given event" do
-      instance = Class.new do
-        def foo(event)
-          event
-        end
-      end.new
+  let(:subscriber_class) do
+    Class.new do
+      include Omnes::Subscriber
 
-      callback = described_class.new(:foo).(instance)
+      attr_reader :value
 
-      expect(callback.(:bar)).to be(:bar)
+      def initialize
+        @value = nil
+      end
+    end
+  end
+  let(:bus) { Omnes::Bus.new }
+
+  it "uses given method as handler" do
+    subscriber_class.class_eval do
+      include Omnes::Subscriber
+
+      handle :foo, with: :foo
+
+      def foo(event)
+        @value = event[:value]
+      end
     end
 
-    it "raises when method is private" do
-      instance = Class.new do
-        private def foo; end
-      end.new
+    bus.register(:foo)
+    subscriber = subscriber_class.new
+    subscriber.subscribe_to(bus)
+    bus.publish(:foo, value: :bar)
 
-      expect {
-        described_class.new(:foo).(instance)
-      }.to raise_error(
-        described_class::PrivateMethodSubscriptionAttemptError,
-        /"foo" private method/m
-      )
+    expect(subscriber.value).to be(:bar)
+  end
+
+  it "provides publication context if the method takes a second parameter" do
+    subscriber_class.class_eval do
+      include Omnes::Subscriber
+
+      handle :foo, with: :foo
+
+      def foo(_event, publication_context)
+        @value = publication_context
+      end
     end
 
-    it "raises when method doesn't exist" do
-      instance = Class.new.new
+    bus.register(:foo)
+    subscriber = subscriber_class.new
+    subscriber.subscribe_to(bus)
+    bus.publish(:foo, value: :bar)
 
-      expect {
-        described_class.new(:foo).(instance)
-      }.to raise_error(
-        described_class::UnknownMethodSubscriptionAttemptError,
-        /"foo" method/m
-      )
+    expect(subscriber.value.is_a?(Omnes::PublicationContext)).to be(true)
+  end
+
+  it "raises when method is private" do
+    subscriber_class.class_eval do
+      include Omnes::Subscriber
+
+      handle :foo, with: :foo
+
+      private def foo(_event); end
     end
+
+    bus.register(:foo)
+    subscriber = subscriber_class.new
+
+    expect {
+      subscriber.subscribe_to(bus)
+    }.to raise_error(
+      described_class::PrivateMethodSubscriptionAttemptError,
+      /"foo" private method/m
+    )
+  end
+
+  it "raises when method doesn't exist" do
+    subscriber_class.class_eval do
+      include Omnes::Subscriber
+
+      handle :foo, with: :foo
+    end
+
+    bus.register(:foo)
+    subscriber = subscriber_class.new
+
+    expect {
+      subscriber.subscribe_to(bus)
+    }.to raise_error(
+      described_class::UnknownMethodSubscriptionAttemptError,
+      /"foo" method/m
+    )
   end
 end

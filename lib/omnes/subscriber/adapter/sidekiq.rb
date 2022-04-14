@@ -59,8 +59,8 @@ module Omnes
         end
 
         # @api private
-        def self.call(instance, event)
-          self.[].(instance, event)
+        def self.call(instance, event, publication_context)
+          self.[].(instance, event, publication_context)
         end
 
         # @param seconds [Integer]
@@ -76,14 +76,28 @@ module Omnes
             @serializer = serializer
           end
 
-          def call(instance, event)
-            instance.class.perform_async(serializer.(event))
+          def call(instance, event, publication_context)
+            if takes_publication_context?(instance)
+              instance.class.perform_async(serializer.(event), publication_context.serialized)
+            else
+              instance.class.perform_async(serializer.(event))
+            end
           end
 
           def in(seconds)
-            lambda do |instance, event|
-              instance.class.perform_in(seconds, serializer.(event))
+            lambda do |instance, event, publication_context|
+              if takes_publication_context?(instance)
+                instance.class.perform_in(seconds, serializer.(event), publication_context.serialized)
+              else
+                instance.class.perform_in(seconds, serializer.(event))
+              end
             end
+          end
+
+          private
+
+          def takes_publication_context?(instance)
+            Subscription.takes_publication_context?(instance.method(:perform))
           end
         end
       end

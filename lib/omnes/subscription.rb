@@ -24,8 +24,14 @@ module Omnes
 
     ALL_EVENTS_MATCHER = ->(_candidate) { true }
 
+    # @api private
     def self.random_id
       SecureRandom.uuid.to_sym
+    end
+
+    # @api private
+    def self.takes_publication_context?(callable)
+      callable.parameters.count == 2
     end
 
     # @api private
@@ -41,10 +47,17 @@ module Omnes
     end
 
     # @api private
-    def call(event)
+    def call(event, publication_context)
       result = nil
       benchmark = Benchmark.measure do
-        result = @callback.(event)
+        # work around Ruby not being able to tell remaining arity for a curried
+        # function (or uncurrying), because we want to be able to create subscriber
+        # adapters partially applying the subscriber instance
+        result = begin
+          @callback.(event, publication_context)
+        rescue ArgumentError
+          @callback.(event)
+        end
       end
 
       Execution.new(subscription: self, result: result, benchmark: benchmark)

@@ -42,24 +42,42 @@ RSpec.describe Omnes::Subscription do
   end
 
   describe "#call" do
+    it "binds the event as the first subscription parameter" do
+      callback = ->(event) { expect(event).to be(:event) }
+
+      subscription = described_class.new(matcher: true_matcher, callback: callback, id: :id)
+
+      subscription.(:event, :context)
+    end
+
+    it "binds the publication context when subscription accepts a second argument" do
+      callback = ->(_event, context) { expect(context).to be(:context) }
+
+      subscription = described_class.new(matcher: true_matcher, callback: callback, id: :id)
+
+      subscription.(:event, :context)
+    end
+
     it "returns an execution instance" do
       subscription = described_class.new(matcher: true_matcher, callback: proc {}, id: :id)
 
-      expect(subscription.(:event)).to be_a(Omnes::Execution)
+      expect(subscription.(:event, :context)).to be_a(Omnes::Execution)
     end
 
-    it "binds the event and sets execution's result" do
-      subscription = described_class.new(matcher: true_matcher, callback: ->(event) { event[:foo] }, id: :id)
+    it "sets the execution result" do
+      callback = ->(event) { event }
 
-      execution = subscription.(foo: :bar)
+      subscription = described_class.new(matcher: true_matcher, callback: callback, id: :id)
 
-      expect(execution.result).to eq(:bar)
+      execution = subscription.(:event, :context)
+
+      expect(execution.result).to be(:event)
     end
 
     it "sets itself as the execution subscription" do
       subscription = described_class.new(matcher: true_matcher, callback: proc { "foo" }, id: :id)
 
-      execution = subscription.(:event)
+      execution = subscription.(:event, :context)
 
       expect(execution.subscription).to be(subscription)
     end
@@ -67,7 +85,7 @@ RSpec.describe Omnes::Subscription do
     it "sets the execution's benchmark" do
       subscription = described_class.new(matcher: true_matcher, callback: proc { "foo" }, id: :id)
 
-      execution = subscription.(:event)
+      execution = subscription.(:event, :context)
 
       expect(execution.benchmark).to be_a(Benchmark::Tms)
     end
