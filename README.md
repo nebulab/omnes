@@ -186,8 +186,8 @@ end
 ### Referencing subscriptions
 
 For all subscription methods we've seen, an `Omnes::Subscription` instance is
-returned. Holding that reference can be useful for [Debugging][#debugging] and
-[Testing][#testing]  purposes.
+returned. Holding that reference can be useful for [debugging](#debugging) and
+[testing](#testing) purposes.
 
 Often though, you won't have the reference at hand when you need it.
 Thankfully, you can provide a subscription identifier on subscription time and
