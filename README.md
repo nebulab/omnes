@@ -37,7 +37,7 @@ The following examples will use the direct `Omnes::Bus` instance. The only
 difference for the mixing use case is that the methods are directly called in
 the including instance.
 
-### Registering events
+## Registering events
 
 Before being able to work with a given event, its name (which must be a
 `Symbol`) must be registered:
@@ -46,7 +46,7 @@ Before being able to work with a given event, its name (which must be a
 bus.register(:order_created)
 ```
 
-### Publishing events
+## Publishing events
 
 An event can be anything responding to a method `:omnes_event_name`, which must match with a
 registered name.
@@ -104,7 +104,7 @@ Omnes.config.event.name_builder = event_name_as_class
 Instance-backed events provide a well-defined structure, and other features,
 like event persistence, can be added on top of them.
 
-### Subscribing to events
+## Subscribing to events
 
 You can subscribe to a specific event to run some code whenever it's published.
 The event is yielded to the subscription block:
@@ -149,7 +149,7 @@ bus.subscribe(:order_created, OrderCreationEmailSubscription.new)
 However, see [Event subscribers](#event-subscribers) section bellow for a more powerful way
 to define standalone event handlers.
 
-#### Global subscriptions
+### Global subscriptions
 
 You can also create a subscription that will run for all events:
 
@@ -169,7 +169,7 @@ end
 bus.subscribe_to_all(LogEventsSubscription.new)
 ```
 
-#### Custom matcher subscriptions
+### Custom matcher subscriptions
 
 Custom event matchers can be defined. A matcher is something responding to
 `#call` and taking the event as an argument. It must return `true` or `false`
