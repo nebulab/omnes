@@ -429,7 +429,8 @@ Omnes.config.subscriber.adapter.active_job.serializer = :serialized_payload.to_p
 #### Custom adapters
 
 Custom adapters can be built. They need to implement a method `#call` taking
-the instance of `Omnes::Subscriber` and the event.
+the instance of `Omnes::Subscriber`, the event and, optionally, the publication
+context (see [debugging subscriptions](#subscription)).
 
 Here's a custom adapter executing a subscriber method in a different
 thread (we add an extra argument for the method name, and we partially apply it
@@ -442,7 +443,6 @@ end
 
 class OrderCreationEmailSubscriber
   include Omnes::Subscriber
-  include Sidekiq::Job
   
   handle :order_created, with: THREAD_ADAPTER.curry[:order_created]
   
@@ -453,8 +453,8 @@ end
 ```
 
 Alternatively, adapters can be curried and only take the instance as an
-argument, returning a one-argument callable taking the event. For instance, we
-could also have defined the thread adapter like this:
+argument, returning a callable taking the event. For instance, we could also
+have defined the thread adapter like this:
 
 ```ruby
 class ThreadAdapter
@@ -516,10 +516,10 @@ When you publish an event, you get back an
 attributes that allow observing what happened:
 
 - `#event` contains the event instance that has been published.
-- `#caller_location` refers to the publication caller.
-- `#time` is the time stamp for the publication.
 - `#executions` contains an array of
   `Omnes::Execution`(lib/omnes/execution.rb). Read more below.
+- `#context` is an instance of
+  [`Omnes::PublicationContext`](lib/omnes/publication_context.rb).
   
 `Omnes::Execution` represents a subscription individual execution. It contains
 the following attributes:
@@ -528,6 +528,40 @@ the following attributes:
 - `#result` contains the result of the execution.
 - `#benchmark` of the operation.
 - `#time` is the time where the execution started.
+
+`Omnes::PublicationContext` represents the shared context for all triggered
+executions. See [Subscription][#subscription] for details.
+
+### Subscription
+
+If your subscription block or callable object takes a second argument, it'll
+contain an instance of an
+[`Omnes::PublicationContext`](lib/omnes/publication_context.rb). It allows you
+to inspect what triggered a given execution from within that execution code. It
+contains:
+
+- `#caller_location` refers to the publication caller.
+- `#time` is the time stamp for the publication.
+
+```ruby
+class OrderCreationEmailSubscriber
+  include Omnes::Subscriber
+  
+  handle :order_created, with: :send_confirmation_email
+
+  def send_confirmation_email(event, publication_context)
+    # debugging
+    abort(publication_context.caller_location.inspect)
+
+    OrderCreationEmail.send(number: event.number, email: event.user_email)
+  end
+end
+```
+
+In case you're developing your own async adapter, you can call `#serialized` on
+an instance of `Omnes::PublicationContext` to get a serialized version of it.
+It'll return a `Hash` with `"caller_location"` and `"time"` keys, and the
+respective `String` representations as values.
 
 ## Testing
 

@@ -71,6 +71,29 @@ RSpec.describe Omnes::Subscriber::Adapter::Sidekiq do
     Object.send(:remove_const, :FOO_TABLE)
   end
 
+  it "can provide the serialized publication context" do
+    class Subscriber
+      include Omnes::Subscriber
+      include Sidekiq::Job
+
+      handle :foo, with: Adapter::Sidekiq
+
+      def perform(_payload, publication_context)
+        LOG[:publication_context] = publication_context
+      end
+    end
+    LOG = {}
+
+    bus.register(:foo)
+    Subscriber.new.subscribe_to(bus)
+
+    bus.publish(:foo)
+
+    expect(LOG[:publication_context].is_a?(Hash)).to be(true)
+  ensure
+    Object.send(:remove_const, :Subscriber)
+  end
+
   it "performs the job in given interval after the publication passing the event's payload" do
     class Subscriber
       include Sidekiq::Job
@@ -94,6 +117,29 @@ RSpec.describe Omnes::Subscriber::Adapter::Sidekiq do
     expect(FOO_TABLE[1]).to eq("name" => "foo")
   ensure
     Object.send(:remove_const, :FOO_TABLE)
+    Object.send(:remove_const, :Subscriber)
+  end
+
+  it "can provide the serialized publication context when giving an interval" do
+    class Subscriber
+      include Omnes::Subscriber
+      include Sidekiq::Job
+
+      handle :foo, with: Adapter::Sidekiq.in(60)
+
+      def perform(_payload, publication_context)
+        LOG[:publication_context] = publication_context
+      end
+    end
+    LOG = {}
+
+    bus.register(:foo)
+    Subscriber.new.subscribe_to(bus)
+
+    bus.publish(:foo)
+
+    expect(LOG[:publication_context].is_a?(Hash)).to be(true)
+  ensure
     Object.send(:remove_const, :Subscriber)
   end
 end

@@ -73,4 +73,27 @@ RSpec.describe Omnes::Subscriber::Adapter::ActiveJob do
     Object.send(:remove_const, :Subscriber)
     Object.send(:remove_const, :FOO_TABLE)
   end
+
+  it "can provide the serialized publication context" do
+    class Subscriber < ActiveJob::Base
+      include Omnes::Subscriber
+
+      handle :foo, with: Adapter::ActiveJob
+
+      def perform(_payload, publication_context)
+        LOG[:publication_context] = publication_context
+      end
+    end
+    LOG = {}
+
+    bus.register(:foo)
+    Subscriber.new.subscribe_to(bus)
+
+    bus.publish(:foo)
+    perform_enqueued_jobs
+
+    expect(LOG[:publication_context].is_a?(Hash)).to be(true)
+  ensure
+    Object.send(:remove_const, :Subscriber)
+  end
 end

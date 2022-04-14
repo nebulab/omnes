@@ -7,7 +7,7 @@ module Omnes
     module Adapter
       # Builds a callback from a method of the instance
       #
-      # You can use instance of this class as the adapter:
+      # You can use an instance of this class as the adapter:
       #
       # ```ruby
       # handle :foo, with: Adapter::Method.new(:foo)
@@ -29,7 +29,7 @@ module Omnes
         def call(instance)
           check_method(instance)
 
-          ->(event) { instance.method(name).(event) }
+          instance.method(name)
         end
 
         private
