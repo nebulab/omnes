@@ -550,4 +550,29 @@ RSpec.shared_examples "bus" do
       expect(bus.subscription(:foo_subs)).to be(subscription)
     end
   end
+
+  describe "#clear" do
+    it "removes subscriptions" do
+      bus = subject.new
+      bus.register(:foo)
+      bus.subscribe(:foo) { :foo }
+
+      bus.clear
+
+      expect(bus.subscriptions.empty?).to be(true)
+    end
+
+    it "uses a pristine register" do
+      bus = subject.new
+
+      expect(bus.registry).not_to be(bus.clear.registry)
+    end
+
+    it "doesn't keep registrations in the new registry" do
+      bus = subject.new
+      bus.register(:foo)
+
+      expect(bus.clear.registry.registered?(:foo)).to be(false)
+    end
+  end
 end

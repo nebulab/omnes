@@ -287,6 +287,18 @@ module Omnes
       subscriptions.find { |subscription| subscription.id == id }
     end
 
+    # Clears all registered events and subscriptions
+    #
+    # Useful for code reloading.
+    #
+    # @return [Omnes::Bus]
+    def clear
+      tap do
+        @subscriptions = []
+        @registry = Registry.new
+      end
+    end
+
     private
 
     def execute_subscriptions_for_event(event, publication_context)

@@ -476,17 +476,28 @@ handle :order_created, with: ThreadAdapter.new(:order_created)
 # ...
 ```
 
-## Debugging
-
-### Unsubscribing
+## Unsubscribing & clearing
 
 You can unsubscribe a given subscription by passing its
-[reference](#referencing-subscriptions) to `Omnes::Bus#unsubscribe`:
+[reference](#referencing-subscriptions) to `Omnes::Bus#unsubscribe` (see how to
+[reference subscriptions](#referencing-subscriptions)):
 
 ```ruby
 subscription = bus.subscribe(:order_created, OrderCreationEmailSubscription.new)
 bus.unsubscribe(subscription)
 ```
+
+Sometimes you might need to leave your bus in a pristine state, with no events
+registered or active subscriptions. That can be useful for autoloading in
+development:
+
+```ruby
+bus.clear
+bus.registry.event_names # => []
+bus.subscriptions # => []
+```
+
+## Debugging
 
 ### Registration
 
@@ -629,9 +640,14 @@ require "omnes"
 Omnes.config.subscriber.autodiscover = true
 
 Bus = Omnes::Bus.new
-Bus.register(:order_created)
 
-OrderCreationEmailSubscriber.new.subscribe_to(Bus)
+Rails.application.config.to_prepare do
+  Bus.clear
+
+  Bus.register(:order_created)
+
+  OrderCreationEmailSubscriber.new.subscribe_to(Bus)
+end
 ```
 
 We can define `OrderCreationEmailSubscriber` in
