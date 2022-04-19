@@ -499,6 +499,22 @@ RSpec.describe Omnes::Subscriber do
       expect(subscriber2.called).to be(true)
     end
 
+    it "doesn't readd previous autodiscoveries when subscribing a second time" do
+      bus.register(:foo)
+      subscriber_class = Class.new do
+        include Omnes::Subscriber[autodiscover: true]
+
+        def on_foo(_event); end
+      end
+      subscriber1 = subscriber_class.new
+      subscriber2 = subscriber_class.new
+
+      subscriber1.subscribe_to(bus)
+      subscriber2.subscribe_to(bus)
+
+      expect(bus.subscriptions.count).to be(2)
+    end
+
     it "can subscribe the same instance to different buses" do
       bus_one = Omnes::Bus.new
       bus_two = Omnes::Bus.new
