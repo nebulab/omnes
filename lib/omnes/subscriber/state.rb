@@ -24,9 +24,9 @@ module Omnes
       def call(bus, instance)
         raise MultipleSubscriberSubscriptionAttemptError if already_called?(bus, instance)
 
-        autodiscover_subscription_definitions(bus, instance) unless autodiscover_strategy.nil?
+        all_subscription_definitions = subscription_definitions + autodiscovered_subscription_definitions(bus, instance)
 
-        definitions = subscription_definitions.map { |defn| defn.(bus, instance) }
+        definitions = all_subscription_definitions.map { |defn| defn.(bus, instance) }
 
         subscribe_definitions(definitions, bus, instance).tap do
           mark_as_called(bus, instance)
@@ -47,18 +47,29 @@ module Omnes
         @calling_cache << [bus, instance]
       end
 
-      def autodiscover_subscription_definitions(bus, instance)
-        bus.registry.event_names.each do |event_name|
-          method_name = autodiscover_strategy.(event_name)
-          next unless instance.respond_to?(method_name, true)
+      def autodiscovered_subscription_definitions(bus, instance)
+        return [] unless autodiscover_strategy
 
-          add_subscription_definition do |_bus|
+        bus.registry.event_names.reduce([]) do |defs, event_name|
+          method_name = autodiscover_strategy.(event_name)
+          if instance.respond_to?(method_name, true)
             [
-              Subscription::SINGLE_EVENT_MATCHER.curry[event_name],
-              Adapter.Type(Adapter::Method.new(method_name)),
-              Subscription.random_id
+              *defs,
+              autodiscovered_subscription_definition(event_name, method_name)
             ]
+          else
+            defs
           end
+        end
+      end
+
+      def autodiscovered_subscription_definition(event_name, method_name)
+        lambda do |_bus, _instance|
+          [
+            Subscription::SINGLE_EVENT_MATCHER.curry[event_name],
+            Adapter.Type(Adapter::Method.new(method_name)),
+            Subscription.random_id
+          ]
         end
       end
 
