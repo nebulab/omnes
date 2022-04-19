@@ -162,7 +162,7 @@ class LogEventsSubscription
   end
   
   def call(event)
-    logger.info("Event #{event.name} published")
+    logger.info("Event #{event.omnes_event_name} published")
   end
 end
 
@@ -176,7 +176,7 @@ Custom event matchers can be defined. A matcher is something responding to
 to match or ignore the event.
 
 ```ruby
-ORDER_EVENTS_MATCHER = ->(event) { event.name.start_with?(:order) }
+ORDER_EVENTS_MATCHER = ->(event) { event.omnes_event_name.start_with?(:order) }
 
 bus.subscribe_with_matcher(ORDER_EVENTS_MATCHER) do |event|
   # ...
@@ -246,7 +246,7 @@ class LogEventsSubscriber
   end
 
   def log_event(event)
-    logger.info("Event #{event.name} published")
+    logger.info("Event #{event.omnes_event_name} published")
   end
 end
 ```
