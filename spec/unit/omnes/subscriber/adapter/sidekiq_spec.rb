@@ -93,6 +93,7 @@ RSpec.describe Omnes::Subscriber::Adapter::Sidekiq do
     expect(LOG[:publication_context].is_a?(Hash)).to be(true)
   ensure
     Object.send(:remove_const, :Subscriber)
+    Object.send(:remove_const, :LOG)
   end
 
   it "performs the job in given interval after the publication passing the event's payload" do

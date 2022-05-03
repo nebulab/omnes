@@ -96,5 +96,6 @@ RSpec.describe Omnes::Subscriber::Adapter::ActiveJob do
     expect(LOG[:publication_context].is_a?(Hash)).to be(true)
   ensure
     Object.send(:remove_const, :Subscriber)
+    Object.send(:remove_const, :LOG)
   end
 end
