@@ -128,13 +128,15 @@ RSpec.describe Omnes::Registry do
       }.to raise_error(/'bar', 'baz'/)
     end
 
-    it "hints on the event name on the error message" do
-      registry = described_class.new
-      registry.register(:foo)
+    if defined?(DidYouMean::PlainFormatter)
+      it "hints on the event name on the error message" do
+        registry = described_class.new
+        registry.register(:foo)
 
-      expect {
-        registry.check_event_name(:fo)
-      }.to raise_error(/Did you mean\?  foo/)
+        expect {
+          registry.check_event_name(:fo)
+        }.to raise_error(/Did you mean\?  foo/)
+      end
     end
   end
 end
