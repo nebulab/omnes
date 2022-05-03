@@ -29,7 +29,7 @@ Layout/LineLength:
   Max: 120
 
 Naming/MethodName:
-  IgnoredPatterns:
+  AllowedPatterns:
     - '.*Type'
 
 Lint/ConstantDefinitionInBlock:
