@@ -28,8 +28,9 @@ RSpec.describe Omnes::Subscriber::Adapter::Sidekiq do
 
     bus.register(:create_foo)
     Subscriber.new.subscribe_to(bus)
+    event = Struct.new(:omnes_event_name, :payload).new(:create_foo, "id" => 1, "attributes" => { "name" => "foo" })
 
-    bus.publish(:create_foo, "id" => 1, "attributes" => { "name" => "foo" })
+    bus.publish(event)
 
     expect(FOO_TABLE[1]).to eq("name" => "foo")
   ensure
@@ -109,10 +110,11 @@ RSpec.describe Omnes::Subscriber::Adapter::Sidekiq do
 
     bus.register(:create_foo)
     Subscriber.new.subscribe_to(bus)
+    event = Struct.new(:omnes_event_name, :payload).new(:create_foo, "id" => 1, "attributes" => { "name" => "foo" })
 
     expect(Subscriber).to receive(:perform_in).with(60, any_args).and_call_original
 
-    bus.publish(:create_foo, "id" => 1, "attributes" => { "name" => "foo" })
+    bus.publish(event)
 
     expect(FOO_TABLE[1]).to eq("name" => "foo")
   ensure

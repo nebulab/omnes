@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
   MSG
   spec.homepage = "https://github.com/nebulab/omnes"
   spec.license = "MIT"
-  spec.required_ruby_version = Gem::Requirement.new(">= 2.7.0")
+  spec.required_ruby_version = Gem::Requirement.new(">= 2.5.0")
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
 
@@ -36,7 +36,7 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_development_dependency "activejob", "~> 7.0"
+  spec.add_development_dependency "activejob"
   spec.add_development_dependency "redcarpet", "~> 3.5"
   spec.add_development_dependency "sidekiq", "~> 6.4"
   spec.add_development_dependency "yard", "~> 0.9"

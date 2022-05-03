@@ -30,8 +30,9 @@ RSpec.describe Omnes::Subscriber::Adapter::ActiveJob do
 
     bus.register(:create_foo)
     Subscriber.new.subscribe_to(bus)
+    event = Struct.new(:omnes_event_name, :payload).new(:create_foo, "id" => 1, "attributes" => { "name" => "foo" })
 
-    bus.publish(:create_foo, "id" => 1, "attributes" => { "name" => "foo" })
+    bus.publish(event)
     perform_enqueued_jobs
 
     expect(FOO_TABLE[1]).to eq("name" => "foo")

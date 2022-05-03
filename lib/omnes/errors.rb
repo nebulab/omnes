@@ -18,7 +18,7 @@ module Omnes
     def default_message
       <<~MSG
         '#{event_name}' event is not registered.
-        #{suggestions_message}
+        #{suggestions_message if defined?(DidYouMean::PlainFormatter)}
 
         All known events are:
 
