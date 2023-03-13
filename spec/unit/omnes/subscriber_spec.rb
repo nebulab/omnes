@@ -330,7 +330,7 @@ RSpec.describe Omnes::Subscriber do
     it "subscribes to events matching with given matcher" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        ::TRUE_MATCHER = ->(_candidate) { true }
+        TRUE_MATCHER = ->(_candidate) { true }
 
         handle_with_matcher TRUE_MATCHER, with: :foo
 
@@ -351,7 +351,7 @@ RSpec.describe Omnes::Subscriber do
     it "can provide id for the subscription" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        ::TRUE_MATCHER = ->(_candidate) { true }
+        TRUE_MATCHER = ->(_candidate) { true }
 
         handle_with_matcher TRUE_MATCHER, with: :foo, id: :foo
 
@@ -370,7 +370,7 @@ RSpec.describe Omnes::Subscriber do
       subscriber_class = Class.new do
         include Omnes::Subscriber
 
-        ::TRUE_MATCHER = ->(_candidate) { true }
+        TRUE_MATCHER = ->(_candidate) { true }
 
         attr_reader :id_suffix
 
@@ -393,7 +393,7 @@ RSpec.describe Omnes::Subscriber do
 
     it "raises when given subscription id has already been used" do
       subscriber_class.class_eval do
-        ::TRUE_MATCHER = ->(_candidate) { true }
+        TRUE_MATCHER = ->(_candidate) { true }
 
         handle_with_matcher TRUE_MATCHER, with: :foo, id: :foo
         handle_with_matcher TRUE_MATCHER, with: :foo, id: :foo
@@ -412,7 +412,7 @@ RSpec.describe Omnes::Subscriber do
     it "builds the callback from a matching method when given a symbol" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        ::TRUE_MATCHER = ->(_candidate) { true }
+        TRUE_MATCHER = ->(_candidate) { true }
 
         handle_with_matcher TRUE_MATCHER, with: :foo
 
@@ -433,7 +433,7 @@ RSpec.describe Omnes::Subscriber do
     it "builds the callback from given lambda" do
       bus.register(:foo)
       subscriber_class.class_eval do
-        ::TRUE_MATCHER = ->(_candidate) { true }
+        TRUE_MATCHER = ->(_candidate) { true }
 
         handle_with_matcher TRUE_MATCHER, with: ->(instance, event) { instance.method(:bar).(event) }
 
