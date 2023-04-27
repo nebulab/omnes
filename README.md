@@ -196,7 +196,7 @@ identifier needs to be a `Symbol`:
 
 ```ruby
 bus.subscribe(:order_created, OrderCreationEmailSubscription.new, id: :order_created_email)
-subscription = bus.subscription(:send_confirmation_email)
+subscription = bus.subscription(:order_created_email)
 ```
 
 ## Event subscribers
