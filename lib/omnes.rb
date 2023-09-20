@@ -44,12 +44,7 @@ module Omnes
     klass.define_method(:omnes_bus) { @omnes_bus ||= Bus.new(cal_loc_start: 2) }
     Bus.instance_methods(false).each do |method|
       klass.define_method(method) do |*args, **kwargs, &block|
-        # TODO: Forward with ... once we deprecate ruby 2.5 & 2.6
-        if kwargs.any?
-          omnes_bus.send(method, *args, **kwargs, &block)
-        else
-          omnes_bus.send(method, *args, &block)
-        end
+        omnes_bus.send(method, *args, **kwargs, &block)
       end
     end
   end
