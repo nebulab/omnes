@@ -182,7 +182,7 @@ module Omnes
       # @raise [Omnes::Subscriber::DuplicateSubscriptionAttemptError] when
       #   trying to subscribe to the same event with the same method more than once
       def subscribe_to(bus)
-        self.class.instance_variable_get(:@_state).public_send(:call, bus, self)
+        self.class.instance_variable_get(:@_state).(bus, self)
       end
     end
 
