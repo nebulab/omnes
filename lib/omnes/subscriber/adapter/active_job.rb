@@ -14,7 +14,7 @@ module Omnes
       # is taken.
       #
       # ```
-      # class MyJob < ActiveJob
+      # class MyJob < ActiveJob::Base
       #   include Omnes::Subscriber
       #
       #   handle :my_event, with: Adapter::ActiveJob

@@ -396,7 +396,7 @@ ActiveJob requires that the argument passed to `#perform` is serializable. By
 default, the result of calling `#payload` in the event is taken.
 
 ```ruby
-class OrderCreationEmailSubscriber < ActiveJob
+class OrderCreationEmailSubscriber < ActiveJob::Base
   include Omnes::Subscriber
   
   handle :order_created, with: Adapter::ActiveJob
